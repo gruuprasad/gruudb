@@ -233,10 +233,10 @@ struct GenericColumn : ColumnBase
     GenericColumn(const GenericColumn &other) = delete;
     GenericColumn(GenericColumn&&) = default;
 
-    std::size_t size() const { return size_; }
-    std::size_t size_in_bytes() const { return size_ * elem_size_; }
-    std::size_t capacity() const { return capacity_; }
-    std::size_t capacity_in_bytes() const { return capacity_ * elem_size_; }
+    virtual std::size_t size() const { return size_; }
+    virtual std::size_t size_in_bytes() const { return size_ * elem_size_; }
+    virtual std::size_t capacity() const { return capacity_; }
+    virtual std::size_t capacity_in_bytes() const { return capacity_ * elem_size_; }
     std::size_t elem_size() const { return elem_size_; }
 
     /** Increases the capacity of the store to a value greater or equal to new_cap. */
