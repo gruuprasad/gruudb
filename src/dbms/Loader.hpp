@@ -39,10 +39,10 @@ template<std::size_t N>
 void Loader::read(Char<N> &chr)
 {
     std::size_t i = 0;
-    int c = fgetc_unlocked(file_);
+    int c = getc_unlocked(file_);
     while (i != N - 1 and c != delimiter and c != '\n') {
         chr.data[i++] = c;
-        c = fgetc_unlocked(file_);
+        c = getc_unlocked(file_);
     }
     assert(i < N);
     chr.data[i] = 0;

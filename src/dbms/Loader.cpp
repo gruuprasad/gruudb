@@ -5,7 +5,6 @@
 #include "impl/RowStore.hpp"
 #include <cstring>
 #include <err.h>
-#include <iostream>
 #include <limits>
 
 
@@ -42,10 +41,10 @@ void Loader::parse_header(const Relation &relation)
 const char * Loader::read()
 {
     strbuf_.clear();
-    int c = fgetc_unlocked(file_);
+    int c = getc_unlocked(file_);
     while (not feof(file_) and c != delimiter and c != '\n') {
         strbuf_.push_back(c);
-        c = fgetc_unlocked(file_);
+        c = getc_unlocked(file_);
     }
     strbuf_.push_back(0);
 
@@ -58,7 +57,7 @@ int64_t Loader::read_int()
     int c = '0';
     while (isnum(c)) {
         res = res * 10 + (c - '0');
-        c = fgetc_unlocked(file_);
+        c = getc_unlocked(file_);
     }
     return res;
 }
@@ -71,8 +70,8 @@ int64_t Loader::read_fixedpoint()
 }
 
 int Loader::read_char() {
-    int c = fgetc_unlocked(file_);
-    fgetc_unlocked(file_);
+    int c = getc_unlocked(file_);
+    getc_unlocked(file_);
     return c;
 }
 
@@ -80,7 +79,7 @@ uint32_t Loader::read_date()
 {
     uint32_t year, month, day;
     fscanf(file_, "%u-%u-%u", &year, &month, &day);
-    fgetc_unlocked(file_);
+    getc_unlocked(file_);
     return date_to_int(year, month, day);
 }
 
