@@ -65,6 +65,7 @@ struct column_iterator
     static constexpr bool is_const = C;
     using column_type = typename std::conditional_t<is_const, const Column<T>, Column<T>>;
     using reference_type = typename std::conditional_t<is_const, const T&, T&>;
+    using pointer_type = typename std::conditional_t<is_const, const T*, T*>;
 
     column_iterator(column_type &column, std::size_t idx) : column_(column) , idx_(idx) { }
 
@@ -79,6 +80,7 @@ struct column_iterator
     bool operator!=(column_iterator other) const { return not operator==(other); }
 
     reference_type operator*() const;
+    pointer_type operator->() const { return & this->operator*(); }
 
     private:
     column_type &column_;
