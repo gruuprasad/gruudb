@@ -193,7 +193,7 @@ struct RowStore : public Store
         }
         return out << "])";
     }
-    DECLARE_DUMP
+    DECLARE_DUMP_VIRTUAL
 
     private:
     void *data_;
@@ -248,7 +248,7 @@ struct GenericColumn : ColumnBase
         return out << "GenericColumn (" << column.size_ << '/' << column.capacity_ << " elements, "
                    << column.elem_size_ << "B)";
     }
-    DECLARE_DUMP
+    DECLARE_DUMP_VIRTUAL
 
     protected:
     void *data_;
@@ -285,6 +285,12 @@ struct Column : GenericColumn
     const_iterator cend() const { return end(); }
 
     void push_back(T value);
+
+    friend std::ostream & operator<<(std::ostream &out, const Column<T> &column) {
+        return out << "Column<" << typeid(T).name() << "> (" << column.size_ << '/' << column.capacity_ << " elements, "
+                   << column.elem_size_ << "B)";
+    }
+    DECLARE_DUMP_VIRTUAL
 };
 
 /**

@@ -20,5 +20,8 @@
 #define ARR_SIZE(ARR) (sizeof(ARR) / sizeof(*(ARR)))
 
 #define DECLARE_DUMP \
+    void dump(std::ostream &out) const __attribute__((noinline)) { out << *this << std::endl; } \
+    void dump() const __attribute__((noinline)) { dump(std::cerr); }
+#define DECLARE_DUMP_VIRTUAL \
     virtual void dump(std::ostream &out) const __attribute__((noinline)) { out << *this << std::endl; } \
     virtual void dump() const __attribute__((noinline)) { dump(std::cerr); }
