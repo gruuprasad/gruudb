@@ -42,11 +42,11 @@ TEST_CASE("ColumnStore/Naive", "[unit]")
 
     SECTION("add elements to columns via push_back and access through iterator") {
         auto &col_float = store.get_column<float>(1);
-        auto &col_varchar = store.get_column<const char*>(5);
+        auto &col_varchar = store.get_column<Varchar>(5);
 
         for (unsigned i = 0; i != 5; ++i) {
             col_float.push_back(3.14f * i);
-            col_varchar.push_back(strdup(std::to_string(i).c_str()));
+            col_varchar.push_back(std::to_string(i).c_str());
         }
 
         REQUIRE(col_float.capacity() >= 5);
@@ -63,7 +63,7 @@ TEST_CASE("ColumnStore/Naive", "[unit]")
         auto varchar_it = col_varchar.begin();
         for (unsigned i = 0; i != 5; ++i, ++float_it, ++varchar_it) {
             CHECK(3.14f * i == *float_it);
-            CHECK(std::to_string(i) == *varchar_it);
+            CHECK(std::to_string(i) == std::string(*varchar_it));
         }
     }
 

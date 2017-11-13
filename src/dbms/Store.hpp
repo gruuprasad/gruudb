@@ -9,8 +9,10 @@
 
 #pragma once
 
+#include "dbms/assert.hpp"
 #include "dbms/Schema.hpp"
 #include "dbms/util.hpp"
+#include <cstdlib>
 #include <cstring>
 #include <initializer_list>
 #include <type_traits>
@@ -132,9 +134,45 @@ struct Char
     friend std::ostream & operator<<(std::ostream &out, const Char &chr) {
         return out << "Char(" << N << ") \"" << chr.data << '"';
     }
+    DECLARE_DUMP
 
     char data[N];
 };
+
+struct Varchar
+{
+    private:
+    Varchar() : value(nullptr) { }
+
+    public:
+    friend void swap(Varchar &first, Varchar &second) {
+        using std::swap;
+        swap(first.value, second.value);
+    }
+
+    Varchar(const char *value) : value(strdup(value)) { }
+    ~Varchar() { free((void*) value); }
+    Varchar(const Varchar &other) : value(strdup(other.value)) { }
+    Varchar(Varchar &&other) { swap(*this, other); }
+
+    Varchar & operator=(Varchar other) {
+        swap(*this, other);
+        return *this;
+    }
+
+    operator const char*() { return value; }
+
+    bool operator==(Varchar other) const { return streq(this->value, other.value); }
+    bool operator!=(Varchar other) const { return not this->operator==(other); }
+
+    friend std::ostream & operator<<(std::ostream &out, const Varchar &vc) {
+        return out << "Varchar \"" << vc.value << '"';
+    }
+    DECLARE_DUMP
+
+    const char *value;
+};
+static_assert(sizeof(Varchar) == sizeof(const char*), "Varchar has incorrect size");
 
 /**
  * This class implements a row store.  It stores tuples by placing the attributes in row-major order.
