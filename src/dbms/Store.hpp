@@ -262,6 +262,10 @@ template<typename T>
 struct Column : GenericColumn
 {
     Column() : GenericColumn(sizeof(T)) { }
+    ~Column() {
+        for (std::size_t i = 0; i != size_; ++i)
+            static_cast<T*>(data_)[i].~T();
+    }
 
     /* Iterator. */
     private:
