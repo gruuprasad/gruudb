@@ -16,6 +16,7 @@
 #include <cstring>
 #include <initializer_list>
 #include <type_traits>
+#include <typeinfo>
 #include <vector>
 
 
