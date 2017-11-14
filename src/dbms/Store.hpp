@@ -374,3 +374,33 @@ struct ColumnStore : public Store
 };
 
 }
+
+namespace std {
+
+template<std::size_t N>
+struct hash<dbms::Char<N>>
+{
+    std::size_t operator()(const dbms::Char<N> &chr) const { return StrHash{}(chr.data); }
+};
+
+template<std::size_t N>
+struct equal_to<dbms::Char<N>>
+{
+    bool operator()(const dbms::Char<N> &first, const dbms::Char<N> &second) const {
+        return streq(first.data, second.data);
+    }
+};
+
+template<>
+struct hash<dbms::Varchar>
+{
+    std::size_t operator()(const dbms::Varchar &varchar) const { return StrHash{}(varchar); }
+};
+
+template<>
+struct equal_to<dbms::Varchar>
+{
+    bool operator()(const dbms::Varchar &first, const dbms::Varchar &second) const { return streq(first, second); }
+};
+
+}
