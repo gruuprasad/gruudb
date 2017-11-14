@@ -131,6 +131,8 @@ struct Char
     bool operator==(const Char &other) { return streq(this->data, other.data); }
     bool operator!=(const Char &other) { return not operator==(other); }
 
+    operator const char*() const { return data; }
+
     friend std::ostream & operator<<(std::ostream &out, const Char &chr) {
         return out << "Char(" << N << ") \"" << chr.data << '"';
     }
