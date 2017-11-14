@@ -160,7 +160,7 @@ struct Varchar
         return *this;
     }
 
-    operator const char*() { return value; }
+    operator const char*() const { return value; }
 
     bool operator==(Varchar other) const { return streq(this->value, other.value); }
     bool operator!=(Varchar other) const { return not this->operator==(other); }
