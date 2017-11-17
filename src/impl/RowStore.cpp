@@ -89,8 +89,14 @@ RowStore RowStore::Create_Explicit(const Relation &relation, std::size_t *order)
 
 void RowStore::reserve(std::size_t new_cap)
 {
-    /* TODO 1.2.1 */
-    dbms_unreachable("Not implemented.");
+    if (new_cap > capacity()) {
+        void *new_data_ = realloc(data_, row_size_ * new_cap);
+        if (new_data_ != NULL) {
+            data_ = new_data_;
+            capacity_ = new_cap;
+        }
+    }
+    //TODO handle memory allocation failure
 }
 
 RowStore::iterator RowStore::append(std::size_t n_rows)
