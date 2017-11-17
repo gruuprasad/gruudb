@@ -3,3 +3,4 @@ resources/*
 *.tar.gz
 *.tbl
 doxy/
+tags
