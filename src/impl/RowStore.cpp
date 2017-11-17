@@ -1,4 +1,5 @@
 #include "impl/RowStore.hpp"
+#include <algorithm>
 
 
 using namespace dbms;
@@ -95,12 +96,15 @@ void RowStore::reserve(std::size_t new_cap)
             data_ = new_data_;
             capacity_ = new_cap;
         }
-    }
     //TODO handle memory allocation failure
+    }
 }
 
 RowStore::iterator RowStore::append(std::size_t n_rows)
 {
-    /* TODO 1.2.2 */
-    dbms_unreachable("Not implemented.");
+    size_ += n_rows;
+    if (size_ > capacity_) {
+        reserve(capacity_ + std::max(n_rows, ROW_CHUNK));
+    } 
+    return iterator(*this, size_ - n_rows);
 }
