@@ -6,20 +6,31 @@ using namespace dbms;
 
 void GenericColumn::reserve(std::size_t new_cap)
 {
-    /* TODO 1.3.1 */
-    dbms_unreachable("Not implemented.");
+    if (new_cap > capacity()) {
+        void *new_data_ = realloc(data_, elem_size_ * new_cap);
+        if (new_data_ != NULL) {
+            data_ = new_data_;
+            capacity_ = new_cap;
+        }
+        //TODO handle memory allocation failure -(alternate) use malloc and handle memory chunks
+    }
 }
 
 ColumnStore::~ColumnStore()
 {
-    /* TODO 1.3.1 */
-    dbms_unreachable("Not implemented.");
+    for (auto column_ : columns_)
+        delete column_;
 }
 
 ColumnStore ColumnStore::Create_Naive(const Relation &relation)
 {
-    /* TODO 1.3.1 */
-    dbms_unreachable("Not implemented.");
+    ColumnStore column_store;
+
+    for (auto attr: relation) 
+        /* column_store.columns_.push_back(new Column<T)>(attr.size + (attr.size % 4))); */
+        //TODO find a way to detect type name
+
+    return column_store;
 }
 
 ColumnStore ColumnStore::Create_Explicit(std::initializer_list<ColumnBase*> columns)
@@ -30,12 +41,20 @@ ColumnStore ColumnStore::Create_Explicit(std::initializer_list<ColumnBase*> colu
 
 std::size_t ColumnStore::size_in_bytes() const
 {
-    /* TODO 1.3.1 */
-    dbms_unreachable("Not implemented.");
+    std::size_t size_bytes = 0;
+
+    for(auto column : columns_)
+        size_bytes += column->capacity_in_bytes();
+    
+    return size_bytes;
 }
 
 std::size_t ColumnStore::capacity_in_bytes() const
 {
-    /* TODO 1.3.1 */
-    dbms_unreachable("Not implemented.");
+    std::size_t capacity_bytes = 0;
+
+    for (auto column : columns_)
+        capacity_bytes += column->capacity_in_bytes();
+
+    return capacity_bytes;
 }
