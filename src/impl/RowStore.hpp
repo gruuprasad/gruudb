@@ -8,7 +8,7 @@
 
 namespace dbms {
 
-const std::size_t ROW_CHUNK = 24960; // minimum number of rows allocated during one reserve
+const std::size_t ROW_CHUNK = 24; // minimum number of rows allocated during one reserve
 
 namespace iterator {
 

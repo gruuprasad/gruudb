@@ -77,12 +77,12 @@ TEST_CASE("RowStore/Naive", "[unit]")
     }
     
     SECTION("insert smaller change size but not capacity") {
-        store.append(42);
-        REQUIRE(store.size() == 42);
+        store.append(15);
+        REQUIRE(store.size() == 15);
         const auto old_capacity = store.capacity();
-        REQUIRE(store.capacity() >= 42);
-        store.append(137);
-        CHECK(store.size() == 179);
+        REQUIRE(store.capacity() >= 15);
+        store.append(5);
+        CHECK(store.size() == 20);
         CHECK(store.capacity() == old_capacity);
     }
 
