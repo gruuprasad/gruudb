@@ -94,54 +94,35 @@ TEST_CASE("RowStore/Naive", "[unit]")
         CHECK(store.size() == 25001);
         CHECK(store.capacity() == 25000 + ROW_CHUNK);
     }
+    
+    SECTION("rows can be read and written through the iterator interface") {
+        RowStore store_b = RowStore::Create_Naive(relation);
+        REQUIRE(store_b.size() == 0);
 
-    //TODO Write neat test case
-    /* SECTION("rows can be read and written through the iterator interface") { */
-    /*     REQUIRE(store.size() == 0); */
+        {
+            auto it = store_b.append(5);
+            REQUIRE(store_b.capacity() >= 5);
+            for (std::size_t i = 0; i != 1; ++i, ++it) {
+                it.get<uint8_t>(0) = i;
+                it.get<float>(1) = 3.14f * i;
+                it.get<int64_t>(2) = (1lu << 42) + i;
+                it.get<Char<3>>(3) = "OK";
+                it.get<double>(4) = 2.71828 * i;
+                it.get<const char*>(5) = strdup(std::to_string(i).c_str());
+            }
+        }
 
-    /*     { */
-    /*         auto it = store.append(5); */
-    /*         REQUIRE(store.capacity() >= 5); */
-    /*         for (std::size_t i = 0; i != 5; ++i, ++it) { */
-    /*             it.get<uint32_t>(0) =  i; */
-    /*             it.get<uint32_t>(1) = (1lu << 20) + i; */
-    /*             it.get<uint32_t>(2) = (1lu << 20) + i; */
-    /*             it.get< int32_t>(3) = i; */
-    /*             it.get< int64_t>(4) = i; */
-    /*             it.get< int64_t>(5) = i; */
-    /*             it.get< int64_t>(6) = i; */
-    /*             it.get< int64_t>(7) = i; */
-    /*             it.get<unsigned char>(8) = i; */
-    /*             it.get<unsigned char>(9) = i; */
-    /*             it.get<uint32_t>(10) = (1lu << 42) + i; */
-    /*             it.get<uint32_t>(11) = (1lu << 42) + i; */
-    /*             it.get<uint32_t>(12) = (1lu << 42) + i; */
-    /*             it.get<Char<26>>(13) = "ship"; */
-    /*             it.get<Char<11>>(14) = "plane"; */
-    /*             it.get<Char<45>>(15) = "nocomment"; */
-    /*         } */
-    /*     } */
+        {
+            auto it = store_b.begin();
+            for (std::size_t i = 0; i != 1; ++i, ++it) {
+                CHECK(it.get<uint8_t>(0) == i);
+                CHECK(it.get<float>(1) == 3.14f * i);
+                CHECK(it.get<int64_t>(2) == (1lu << 42) + i);
+                CHECK(it.get<Char<3>>(3) == "OK");
+                CHECK(it.get<double>(4) == 2.71828 * i);
+                CHECK(std::to_string(i) == it.get<const char*>(5));
+            }
+        }
+    }
 
-    /*     { */
-    /*         auto it = store.begin(); */
-    /*         for (std::size_t i = 0; i != 5; ++i, ++it) { */
-    /*             CHECK(it.get<uint32_t>(0) == (1lu << 20) + i); */
-    /*             CHECK(it.get<uint32_t>(1) == (1lu << 20) + i); */
-    /*             CHECK(it.get<uint32_t>(2) == (1lu << 20) + i); */
-    /*             CHECK(it.get< int32_t>(3) == (1lu << 20) + i); */
-    /*             CHECK(it.get< int64_t>(4) == (1lu << 42) + i); */
-    /*             CHECK(it.get< int64_t>(5) == (1lu << 42) + i); */
-    /*             CHECK(it.get< int64_t>(6) == (1lu << 42) + i); */
-    /*             CHECK(it.get< int64_t>(7) == (1lu << 42) + i); */
-    /*             CHECK(it.get<unsigned char>(8) == "OK"); */
-    /*             CHECK(it.get<unsigned char>(9) == "OK"); */
-    /*             CHECK(it.get<uint32_t>(10) == (1lu << 20) + i); */
-    /*             CHECK(it.get<uint32_t>(11) == (1lu << 20) + i); */
-    /*             CHECK(it.get<uint32_t>(12) == (1lu << 20) + i); */
-    /*             CHECK(it.get<Char<26>>(13) == "ship"); */
-    /*             CHECK(it.get<Char<11>>(14) == "plane"); */
-    /*             CHECK(it.get<Char<45>>(15) == "nocomment"); */           
-    /*         } */
-    /*     } */
-    /* } */
 }
