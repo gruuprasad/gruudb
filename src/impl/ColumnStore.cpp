@@ -27,8 +27,7 @@ ColumnStore ColumnStore::Create_Naive(const Relation &relation)
     ColumnStore column_store;
 
     for (auto attr: relation) 
-        /* column_store.columns_.push_back(new Column<T)>(attr.size + (attr.size % 4))); */
-        //TODO find a way to detect type name
+        column_store.columns_.push_back(new Column<decltype(attr.type)>);
 
     return column_store;
 }
@@ -44,7 +43,7 @@ std::size_t ColumnStore::size_in_bytes() const
     std::size_t size_bytes = 0;
 
     for(auto column : columns_)
-        size_bytes += column->capacity_in_bytes();
+        size_bytes += column->size_in_bytes();
     
     return size_bytes;
 }

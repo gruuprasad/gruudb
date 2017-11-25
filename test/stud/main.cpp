@@ -24,11 +24,21 @@ Relation relation("relation", {
 
 TEST_CASE("ColumnStore/Naive", "[unit]")
 {
-    SECTION("ColumnStore creation"){
-        ColumnStore store = ColumnStore::Create_Naive(relation);
+    ColumnStore store = ColumnStore::Create_Naive(relation);
 
-        REQUIRE(store.size() == 0);
-        REQUIRE(store.size_in_bytes() == 0);
+    REQUIRE(store.size() == 0);
+    REQUIRE(store.size_in_bytes() == 0);
+    
+    SECTION("access to columns via attribute offset") {
+      auto &int1 = store.get_column<char>(0);
+      CHECK(int1.size() == 0);
+      CHECK(int1.size_in_bytes() == 0);
+      CHECK(int1.elem_size() == 1);
+
+      auto &char3 = store.get_column<Char<3>>(3);
+      CHECK(char3.size() == 0);
+      CHECK(char3.size_in_bytes() == 0);
+      CHECK(char3.elem_size() == 3);
     }
 }
 
