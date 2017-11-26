@@ -9,11 +9,14 @@
 
 #pragma once
 
+#include "dbms/assert.hpp"
 #include "dbms/Schema.hpp"
 #include "dbms/util.hpp"
+#include <cstdlib>
 #include <cstring>
 #include <initializer_list>
 #include <type_traits>
+#include <typeinfo>
 #include <vector>
 
 
@@ -65,6 +68,7 @@ struct column_iterator
     static constexpr bool is_const = C;
     using column_type = typename std::conditional_t<is_const, const Column<T>, Column<T>>;
     using reference_type = typename std::conditional_t<is_const, const T&, T&>;
+    using pointer_type = typename std::conditional_t<is_const, const T*, T*>;
 
     column_iterator(column_type &column, std::size_t idx) : column_(column) , idx_(idx) { }
 
@@ -79,6 +83,7 @@ struct column_iterator
     bool operator!=(column_iterator other) const { return not operator==(other); }
 
     reference_type operator*() const;
+    pointer_type operator->() const { return & this->operator*(); }
 
     private:
     column_type &column_;
@@ -127,12 +132,50 @@ struct Char
     bool operator==(const Char &other) { return streq(this->data, other.data); }
     bool operator!=(const Char &other) { return not operator==(other); }
 
+    operator const char*() const { return data; }
+
     friend std::ostream & operator<<(std::ostream &out, const Char &chr) {
         return out << "Char(" << N << ") \"" << chr.data << '"';
     }
+    DECLARE_DUMP
 
     char data[N];
 };
+
+struct Varchar
+{
+    private:
+    Varchar() : value(nullptr) { }
+
+    public:
+    friend void swap(Varchar &first, Varchar &second) {
+        using std::swap;
+        swap(first.value, second.value);
+    }
+
+    Varchar(const char *value) : value(strdup(value)) { }
+    ~Varchar() { free((void*) value); }
+    Varchar(const Varchar &other) : value(strdup(other.value)) { }
+    Varchar(Varchar &&other) { swap(*this, other); }
+
+    Varchar & operator=(Varchar other) {
+        swap(*this, other);
+        return *this;
+    }
+
+    operator const char*() const { return value; }
+
+    bool operator==(Varchar other) const { return streq(this->value, other.value); }
+    bool operator!=(Varchar other) const { return not this->operator==(other); }
+
+    friend std::ostream & operator<<(std::ostream &out, const Varchar &vc) {
+        return out << "Varchar \"" << vc.value << '"';
+    }
+    DECLARE_DUMP
+
+    const char *value;
+};
+static_assert(sizeof(Varchar) == sizeof(const char*), "Varchar has incorrect size");
 
 /**
  * This class implements a row store.  It stores tuples by placing the attributes in row-major order.
@@ -191,7 +234,7 @@ struct RowStore : public Store
         }
         return out << "])";
     }
-    DECLARE_DUMP
+    DECLARE_DUMP_VIRTUAL
 
     private:
     void *data_;
@@ -233,10 +276,10 @@ struct GenericColumn : ColumnBase
     GenericColumn(const GenericColumn &other) = delete;
     GenericColumn(GenericColumn&&) = default;
 
-    std::size_t size() const { return size_; }
-    std::size_t size_in_bytes() const { return size_ * elem_size_; }
-    std::size_t capacity() const { return capacity_; }
-    std::size_t capacity_in_bytes() const { return capacity_ * elem_size_; }
+    virtual std::size_t size() const { return size_; }
+    virtual std::size_t size_in_bytes() const { return size_ * elem_size_; }
+    virtual std::size_t capacity() const { return capacity_; }
+    virtual std::size_t capacity_in_bytes() const { return capacity_ * elem_size_; }
     std::size_t elem_size() const { return elem_size_; }
 
     /** Increases the capacity of the store to a value greater or equal to new_cap. */
@@ -246,7 +289,7 @@ struct GenericColumn : ColumnBase
         return out << "GenericColumn (" << column.size_ << '/' << column.capacity_ << " elements, "
                    << column.elem_size_ << "B)";
     }
-    DECLARE_DUMP
+    DECLARE_DUMP_VIRTUAL
 
     protected:
     void *data_;
@@ -262,6 +305,10 @@ template<typename T>
 struct Column : GenericColumn
 {
     Column() : GenericColumn(sizeof(T)) { }
+    ~Column() {
+        for (std::size_t i = 0; i != size_; ++i)
+            static_cast<T*>(data_)[i].~T();
+    }
 
     /* Iterator. */
     private:
@@ -279,6 +326,12 @@ struct Column : GenericColumn
     const_iterator cend() const { return end(); }
 
     void push_back(T value);
+
+    friend std::ostream & operator<<(std::ostream &out, const Column<T> &column) {
+        return out << "Column<" << typeid(T).name() << "> (" << column.size_ << '/' << column.capacity_ << " elements, "
+                   << column.elem_size_ << "B)";
+    }
+    DECLARE_DUMP_VIRTUAL
 };
 
 /**
@@ -321,6 +374,36 @@ struct ColumnStore : public Store
 
     private:
     std::vector<ColumnBase*> columns_;
+};
+
+}
+
+namespace std {
+
+template<std::size_t N>
+struct hash<dbms::Char<N>>
+{
+    std::size_t operator()(const dbms::Char<N> &chr) const { return StrHash{}(chr.data); }
+};
+
+template<std::size_t N>
+struct equal_to<dbms::Char<N>>
+{
+    bool operator()(const dbms::Char<N> &first, const dbms::Char<N> &second) const {
+        return streq(first.data, second.data);
+    }
+};
+
+template<>
+struct hash<dbms::Varchar>
+{
+    std::size_t operator()(const dbms::Varchar &varchar) const { return StrHash{}(varchar); }
+};
+
+template<>
+struct equal_to<dbms::Varchar>
+{
+    bool operator()(const dbms::Varchar &first, const dbms::Varchar &second) const { return streq(first, second); }
 };
 
 }

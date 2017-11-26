@@ -40,3 +40,19 @@ inline void int_to_date(uint32_t date, uint32_t &year, uint32_t &month, uint32_t
 }
 
 inline bool streq(const char *first, const char *second) { return 0 == strcmp(first, second); }
+
+struct StrHash
+{
+    size_t operator()(const char *c_str) const {
+        size_t hash = 5381;
+        char c;
+        while ((c = *c_str++))
+            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+        return hash;
+    }
+};
+
+struct StrEqual
+{
+    bool operator()(const char *first, const char *second) const { return streq(first, second); }
+};
