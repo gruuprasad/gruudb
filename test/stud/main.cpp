@@ -40,6 +40,48 @@ TEST_CASE("ColumnStore/Naive", "[unit]")
       CHECK(char3.size_in_bytes() == 0);
       CHECK(char3.elem_size() == 3);
     }
+    
+    SECTION("add elements to columns via push_back and access through iterator") {
+        auto &col_float = store.get_column<float>(1);
+        auto &col_varchar = store.get_column<const char*>(5);
+
+        for (unsigned i = 0; i != 5; ++i) {
+            col_float.push_back(3.14f * i);
+            col_varchar.push_back(strdup(std::to_string(i).c_str()));
+        }
+
+        REQUIRE(col_float.capacity() >= 5);
+        REQUIRE(col_float.capacity_in_bytes() >= 5 * sizeof(float));
+        REQUIRE(col_float.size() == 5);
+        CHECK(col_float.size_in_bytes() == 5 * sizeof(float));
+
+        REQUIRE(col_varchar.capacity() >= 5);
+        REQUIRE(col_varchar.capacity_in_bytes() >= 5 * sizeof(const char*));
+        REQUIRE(col_varchar.size() == 5);
+        CHECK(col_varchar.size_in_bytes() == 5 * sizeof(const char*));
+
+        auto float_it = col_float.begin();
+        auto varchar_it = col_varchar.begin();
+        for (unsigned i = 0; i != 5; ++i, ++float_it, ++varchar_it) {
+            CHECK(3.14f * i == *float_it);
+            CHECK(std::to_string(i) == *varchar_it);
+        }
+    }
+
+    SECTION("adding many elements to a column grows its capacity") {
+        auto &col_int8 = store.get_column<int64_t>(2);
+
+        REQUIRE(col_int8.size() == 0);
+        const auto old_cap = col_int8.capacity();
+
+        for (auto i = 2 * old_cap; i; --i)
+            col_int8.push_back(int64_t(i));
+
+        REQUIRE(col_int8.capacity() >= 2 * old_cap);
+        CHECK(col_int8.capacity_in_bytes() >= 2 * old_cap * 8);
+        REQUIRE(col_int8.size() == 2 * old_cap);
+    }
+
 }
 
 

@@ -11,7 +11,7 @@ namespace iterator {
 template<bool C, typename T>
 typename column_iterator<C, T>::reference_type column_iterator<C, T>::operator*() const
 {
-    return reinterpret_cast<reference_type>(column_);
+  return reinterpret_cast<column_iterator<C, T>::reference_type>(static_cast<uint8_t *>(column_.data_)[column_.elem_size() * idx_]);
 }
 
 }
@@ -19,14 +19,16 @@ typename column_iterator<C, T>::reference_type column_iterator<C, T>::operator*(
 template<typename T>
 void Column<T>::push_back(T value)
 {
-    /* TODO 1.3.2 */
-    dbms_unreachable("Not implemented.");
+    if (size() == capacity())
+      reserve(size() + elem_size() * 25);
+    *iterator(*this, size()) = value;
+    size_++;
 }
 
 template<typename T>
 Column<T> & ColumnStore::get_column(std::size_t offset)
 {
-    return *columns_[offset]
+    return *static_cast<Column<T>*>(columns_[offset]); 
 }
 
 }

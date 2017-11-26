@@ -26,8 +26,12 @@ ColumnStore ColumnStore::Create_Naive(const Relation &relation)
 {
     ColumnStore column_store;
 
-    for (auto attr: relation) 
-        column_store.columns_.push_back(new Column<decltype(attr.type)>);
+    for (auto attr: relation) { 
+      if (attr.type == Attribute::TY_Varchar)
+        column_store.columns_.push_back(new GenericColumn(sizeof(void*)));
+      else 
+        column_store.columns_.push_back(new GenericColumn(attr.size));
+    }
 
     return column_store;
 }
