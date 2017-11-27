@@ -17,7 +17,7 @@ std::size_t get_alignment_requirement(const Attribute &attr)
             return 1;
 
         case Attribute::TY_Varchar:
-            return sizeof(void*);
+            return sizeof(Varchar);
 
         default: dbms_unreachable("unknown attribute type");
     }

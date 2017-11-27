@@ -118,7 +118,6 @@ TEST_CASE("RowStore/Naive", "[unit]")
                 CHECK(it.get<uint8_t>(0) == i);
                 CHECK(it.get<float>(1) == 3.14f * i);
                 CHECK(it.get<int64_t>(2) == (1lu << 42) + i);
-                CHECK(it.get<Char<3>>(3) == "OK");
                 CHECK(it.get<double>(4) == 2.71828 * i);
                 CHECK(std::to_string(i) == it.get<const char*>(5));
             }
