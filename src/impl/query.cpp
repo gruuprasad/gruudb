@@ -31,7 +31,7 @@ uint64_t Q1(const ColumnStore &store)
     uint64_t result = 0;
 
     auto it_11 = store.get_column<uint32_t>(11).cbegin();
-    auto end_11 = store.get_column<uint32_t>(11).cbegin();
+    auto end_11 = store.get_column<uint32_t>(11).cend();
     auto it_1 = store.get_column<int64_t>(1).cbegin();
     auto it_5 = store.get_column<int64_t>(5).cbegin();
     auto it_3 = store.get_column<int64_t>(3).cbegin();
@@ -39,7 +39,6 @@ uint64_t Q1(const ColumnStore &store)
     while (it_11 != end_11) {
         if ((*it_11) < date_threshold)
             result += (*it_1 * (1 - *it_5) * (1 + *it_3));
-        std::cout << *it_11 << "  " << *it_1 << "  " << *it_3 << "  " << *it_5 << "\n";
         ++it_11; ++it_1; ++it_3; ++it_5;
     }
 
