@@ -168,7 +168,7 @@ RowStore::iterator RowStore::append(std::size_t n_rows)
 {
     size_ += n_rows;
     if (size_ > capacity_) {
-        reserve(capacity_ + std::max(n_rows, ROW_CHUNK));
+        reserve(capacity_ + std::max(n_rows, capacity_ + (capacity_ / 2)));
     } 
     return iterator(*this, size_ - n_rows);
 }
