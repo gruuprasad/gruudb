@@ -183,3 +183,39 @@ std::size_t Loader::load_LineItem(const char *filename, const Relation &relation
 
     return num_rows;
 }
+
+std::size_t Loader::load_Orders(const char *filename, const Relation &relation, ColumnStore &store,
+                                const std::size_t max_rows)
+{
+    Loader loader(filename, '|');
+    loader.parse_header(relation);
+
+    std::size_t num_rows = 0;
+    while (num_rows != max_rows) {
+        uint32_t orderkey = loader.read_int();
+        uint32_t custkey = loader.read_int();
+        char orderstatus = loader.read_char();
+        uint64_t totalprice = loader.read_fixedpoint();
+        uint32_t orderdate = loader.read_date();
+        Char<16> orderpriority; loader.read(orderpriority);
+        Char<16> clerk; loader.read(clerk);
+        int32_t shippriority = loader.read_int();
+        Char<80> comment; loader.read(comment);
+
+        if (feof(loader.file_)) break;
+
+        ++num_rows;
+
+        store.get_column<uint32_t>(loader.offsets_[0]).push_back(orderkey);
+        store.get_column<uint32_t>(loader.offsets_[1]).push_back(custkey);
+        store.get_column<char>(loader.offsets_[2]).push_back(orderstatus);
+        store.get_column<uint64_t>(loader.offsets_[3]).push_back(totalprice);
+        store.get_column<uint32_t>(loader.offsets_[4]).push_back(orderdate);
+        store.get_column<Char<16>>(loader.offsets_[5]).push_back(orderpriority);
+        store.get_column<Char<16>>(loader.offsets_[6]).push_back(clerk);
+        store.get_column<int32_t>(loader.offsets_[7]).push_back(shippriority);
+        store.get_column<Char<80>>(loader.offsets_[8]).push_back(comment);
+    }
+
+    return num_rows;
+}

@@ -21,7 +21,7 @@ Relation relation("relation", {
 
 }
 
-TEST_CASE("ColumnStore/Naive", "[unit]")
+TEST_CASE("ColumnStore/Naive", "[unit][milestone1]")
 {
     ColumnStore store = ColumnStore::Create_Naive(relation);
 
@@ -55,9 +55,9 @@ TEST_CASE("ColumnStore/Naive", "[unit]")
         CHECK(col_float.size_in_bytes() == 5 * sizeof(float));
 
         REQUIRE(col_varchar.capacity() >= 5);
-        REQUIRE(col_varchar.capacity_in_bytes() >= 5 * sizeof(const char*));
+        REQUIRE(col_varchar.capacity_in_bytes() >= 5 * sizeof(const char*) + 2 * 5);
         REQUIRE(col_varchar.size() == 5);
-        CHECK(col_varchar.size_in_bytes() == 5 * sizeof(const char*));
+        CHECK(col_varchar.size_in_bytes() == 5 * sizeof(const char*) + 2 * 5);
 
         auto float_it = col_float.begin();
         auto varchar_it = col_varchar.begin();
