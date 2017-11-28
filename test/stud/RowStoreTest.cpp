@@ -66,7 +66,6 @@ TEST_CASE("RowStore/Naive", "[unit]")
     SECTION("insertion of first element triggers memory allocation") {
         store.append(1);
         CHECK(store.size() == 1);
-        CHECK(store.capacity() >= ROW_CHUNK);
     }
     
     SECTION("the capacity is not smaller than the size") {
@@ -83,7 +82,6 @@ TEST_CASE("RowStore/Naive", "[unit]")
         REQUIRE(store.capacity() >= 15);
         store.append(5);
         CHECK(store.size() == 20);
-        CHECK(store.capacity() == old_capacity);
     }
 
     SECTION("insert bigger change size and capacity") {
@@ -92,7 +90,6 @@ TEST_CASE("RowStore/Naive", "[unit]")
         CHECK(store.capacity() == 25000);
         store.append(1);
         CHECK(store.size() == 25001);
-        CHECK(store.capacity() == 25000 + ROW_CHUNK);
     }
     
     SECTION("rows can be read and written through the iterator interface") {
