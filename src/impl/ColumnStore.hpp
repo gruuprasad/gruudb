@@ -2,6 +2,8 @@
 
 #include "dbms/Store.hpp"
 #include "dbms/util.hpp"
+#include <typeinfo>
+#include <new>
 
 
 namespace dbms {
@@ -20,8 +22,12 @@ template<typename T>
 void Column<T>::push_back(T value)
 {
     if (size() == capacity())
-      reserve(size() + elem_size() * 25);
-    *iterator(*this, size()) = value;
+      reserve(size() + elem_size() * (capacity() + capacity() / 2));
+    if (typeid(T).name() == typeid(Varchar).name()) {
+        new (iterator(*this, size()).operator->()) T{value};
+    }
+    else
+        *iterator(*this, size()) = value;
     size_++;
 }
 
