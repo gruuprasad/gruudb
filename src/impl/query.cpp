@@ -64,16 +64,39 @@ unsigned Q2(const RowStore &store)
 {
     unsigned result = 0;
     
-    std::unordered_map<std::size_t, unsigned> mode_count;
+    std::vector<unsigned> mode_count{0, 0, 0, 0, 0, 0, 0};
 
-    std::hash<Char<11>> hashChar;
-    
     for (auto it = store.cbegin(), end = store.cend(); it != end; ++it) {
-       ++mode_count[hashChar(it.get<Char<11>>(13))];
+        switch (static_cast<char>((it.get<Char<11> >(13)).data[0])) {
+            case 'T':
+                ++mode_count[0];
+                break;
+            case 'M':
+                ++mode_count[1];
+                break;
+            case 'A':
+                ++mode_count[2];
+                break;
+            case 'F':
+                ++mode_count[3];
+                break;
+            case 'S':
+                ++mode_count[4];
+                break;
+            case 'R':
+                if (static_cast<char>(it.get<Char<11>>(13).data[1])  == 'E')
+                    ++mode_count[5];
+                else
+                    ++mode_count[6];
+                break;
+            default:
+                std::cout << it.get<Char<11>>(13) << std::endl;
+                exit(1);
+        }
     }
 
     for (auto it : mode_count)
-        result = std::max(result, it.second);
+        result = std::max(result, it);
 
     return result;
 }
@@ -81,18 +104,42 @@ unsigned Q2(const RowStore &store)
 unsigned Q2(const ColumnStore &store)
 {
     unsigned result = 0;
-    std::hash<Char<11>> hashChar;
-    std::unordered_map<std::size_t, unsigned> mode_count;
+    std::vector<unsigned> mode_count{0, 0, 0, 0, 0, 0, 0};
     auto it_13 = store.get_column<Char<11>>(13).cbegin();
     auto end_13 = store.get_column<Char<11>>(13).cend();
 
     while (it_13 != end_13) {
-       ++mode_count[hashChar(*it_13)];
+       switch (static_cast<char>((*it_13).data[0])) {
+            case 'T':
+                ++mode_count[0];
+                break;
+            case 'M':
+                ++mode_count[1];
+                break;
+            case 'A':
+                ++mode_count[2];
+                break;
+            case 'F':
+                ++mode_count[3];
+                break;
+            case 'S':
+                ++mode_count[4];
+                break;
+            case 'R':
+                if (static_cast<char>((*it_13).data[1])  == 'E')
+                    ++mode_count[5];
+                else
+                    ++mode_count[6];
+                break;
+            default:
+                std::cout << *it_13 << std::endl;
+                exit(1);
+        }
        ++it_13;
     }
     
     for (auto it : mode_count)
-        result = std::max(result, it.second);
+        result = std::max(result, it);
 
     return result;
 }
