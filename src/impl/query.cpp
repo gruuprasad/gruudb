@@ -3,7 +3,7 @@
 #include "impl/ColumnStore.hpp"
 #include "impl/RowStore.hpp"
 #include <unordered_map>
-#include <any>
+#include <chrono>
 
 
 namespace dbms {
@@ -11,6 +11,12 @@ namespace dbms {
 namespace query {
 
 namespace milestone1 {
+
+/* Query 1
+ * SELECT CAST(SUM( extendedprice * (1 - discount) * (1 + tax)) AS INT)
+ * FROM lineitem
+ * WHERE shipdate < DATE('1998-01-01')
+ */
 
 uint64_t Q1(const RowStore &store)
 {
@@ -45,9 +51,29 @@ uint64_t Q1(const ColumnStore &store)
     return result/100;
 }
 
+/*
+ * Query 2
+ * SELECT COUNT(*) as num
+ * FROM lineitem
+ * GROUP BY shipmode
+ * ORDER BY num DESC
+ * LIMIT 1;
+ */
+
 unsigned Q2(const RowStore &store)
 {
     unsigned result = 0;
+    
+    std::unordered_map<std::size_t, unsigned> mode_count;
+
+    std::hash<Char<11>> hashChar;
+    
+    for (auto it = store.cbegin(), end = store.cend(); it != end; ++it) {
+       ++mode_count[hashChar(it.get<Char<11>>(13))];
+    }
+
+    for (auto it : mode_count)
+        result = std::max(result, it.second);
 
     return result;
 }
@@ -55,6 +81,18 @@ unsigned Q2(const RowStore &store)
 unsigned Q2(const ColumnStore &store)
 {
     unsigned result = 0;
+    std::hash<Char<11>> hashChar;
+    std::unordered_map<std::size_t, unsigned> mode_count;
+    auto it_13 = store.get_column<Char<11>>(13).cbegin();
+    auto end_13 = store.get_column<Char<11>>(13).cend();
+
+    while (it_13 != end_13) {
+       ++mode_count[hashChar(*it_13)];
+       ++it_13;
+    }
+    
+    for (auto it : mode_count)
+        result = std::max(result, it.second);
 
     return result;
 }
