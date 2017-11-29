@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <chrono>
 
+using namespace std::chrono;
 
 namespace dbms {
 
@@ -41,11 +42,10 @@ uint64_t Q1(const ColumnStore &store)
     auto it_1 = store.get_column<int64_t>(1).cbegin();
     auto it_5 = store.get_column<int64_t>(5).cbegin();
     auto it_3 = store.get_column<int64_t>(3).cbegin();
-
-    while (it_11 != end_11) {
-        if ((*it_11) < date_threshold)
+    
+    for (; it_11 != end_11; ++it_11, ++it_1, ++it_3, ++it_5) {
+        if (*it_11 < date_threshold)
             result += (*it_1 * (1 - *it_5) * (1 + *it_3));
-        ++it_11; ++it_1; ++it_3; ++it_5;
     }
 
     return result/100;

@@ -6,7 +6,7 @@ using namespace dbms;
 
 void GenericColumn::reserve(std::size_t new_cap)
 {
-    if (new_cap > capacity()) {
+    if (new_cap > capacity_) {
         void *new_data_ = realloc(data_, elem_size_ * new_cap);
         if (new_data_ != NULL) {
             data_ = new_data_;
