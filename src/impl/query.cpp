@@ -22,20 +22,22 @@ namespace milestone1 {
 uint64_t Q1(const RowStore &store)
 {
   const uint32_t date_threshold = date_to_int(1998, 1, 1);
-  uint64_t result = 0;
+  float result = 0;
 
   for (auto it = store.cbegin(), end = store.cend(); it != end; ++it) {
-      if (it.get<uint32_t>(11) < date_threshold) 
-          result += it.get<int64_t>(1)/100 * (1 - it.get<int64_t>(5)/100) * (1 + it.get<int64_t>(3)/100);
+      if (it.get<uint32_t>(11) < date_threshold)  {
+          result += (float)it.get<int64_t>(1)/100 * (1 - (float)it.get<int64_t>(5)/100) * (1 + (float)it.get<int64_t>(3)/100);
+          /* std::cout <<  result << "  " << it.get<int64_t>(1) << "  " << it.get<int64_t>(5) << "  "  <<  it.get<int64_t>(3) << std::endl; */
+      }
   }
 
-  return result;
+  return (uint64_t)result;
 }
 
 uint64_t Q1(const ColumnStore &store)
 {
     const uint32_t date_threshold = date_to_int(1998, 1, 1);
-    uint64_t result = 0;
+    float result = 0;
 
     auto it_11 = store.get_column<uint32_t>(11).cbegin();
     auto end_11 = store.get_column<uint32_t>(11).cend();
@@ -45,7 +47,7 @@ uint64_t Q1(const ColumnStore &store)
     
     for (; it_11 != end_11; ++it_11, ++it_1, ++it_3, ++it_5) {
         if (*it_11 < date_threshold)
-            result += (*it_1/100 * (1 - *it_5/100) * (1 + *it_3/100));
+            result += ((float)*it_1 / 100 * (1 - (float)*it_5 / 100) * (1 + (float)*it_3 / 100));
     }
 
     return result;
