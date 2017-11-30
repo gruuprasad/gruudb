@@ -26,10 +26,10 @@ uint64_t Q1(const RowStore &store)
 
   for (auto it = store.cbegin(), end = store.cend(); it != end; ++it) {
       if (it.get<uint32_t>(11) < date_threshold) 
-          result += it.get<int64_t>(1) * (1 - it.get<int64_t>(5)) * (1 + it.get<int64_t>(3));
+          result += it.get<int64_t>(1)/100 * (1 - it.get<int64_t>(5)/100) * (1 + it.get<int64_t>(3)/100);
   }
 
-  return result/100;
+  return result;
 }
 
 uint64_t Q1(const ColumnStore &store)
@@ -45,10 +45,10 @@ uint64_t Q1(const ColumnStore &store)
     
     for (; it_11 != end_11; ++it_11, ++it_1, ++it_3, ++it_5) {
         if (*it_11 < date_threshold)
-            result += (*it_1 * (1 - *it_5) * (1 + *it_3));
+            result += (*it_1/100 * (1 - *it_5/100) * (1 + *it_3/100));
     }
 
-    return result/100;
+    return result;
 }
 
 /*
