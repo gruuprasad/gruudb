@@ -44,11 +44,11 @@ DECLARE_ENUM(Type);
     Attribute(Type type, std::size_t size, const char *name) : name(name) , type(type) , size(size) { }
 
     public:
-    std::string name; // the name
-    Type type; // the type
-    std::size_t size; // the size in bytes
+    std::string name; ///< the name
+    Type type; ///< the type
+    std::size_t size; ///< the size in bytes
     private:
-    std::size_t offset_; // the offset of the attribute within the relation
+    std::size_t offset_; ///< the offset of the attribute within the relation
 
     public:
     /* Default constructor. */
@@ -74,8 +74,7 @@ DECLARE_ENUM(Type);
     friend std::ostream & operator<<(std::ostream &out, const Attribute &attr) {
         return out << "Attribute(\"" << attr.name << "\", " << attr.type_name() << ", " << attr.size << ")";
     }
-    virtual void dump(std::ostream &out) const __attribute__((noinline)) { out << *this << std::endl; } \
-    virtual void dump() const __attribute__((noinline)) { dump(std::cerr); }
+    DECLARE_DUMP
 
 #undef Type
 };
@@ -112,9 +111,7 @@ struct Relation
         }
     }
 
-    ~Relation() {
-        free(attributes_);
-    }
+    ~Relation() { free(attributes_); }
 
     Attribute * begin() { return attributes_; }
     Attribute * end() { return attributes_ + size_; }
@@ -147,8 +144,8 @@ struct Relation
 
     std::string name;
     private:
-    Attribute *attributes_; // array of attributes
-    std::size_t size_; // number of attributes
+    Attribute *attributes_; ///< array of attributes
+    std::size_t size_; ///< number of attributes
     std::unordered_map<std::string, std::size_t> name_to_attribute_;
 };
 

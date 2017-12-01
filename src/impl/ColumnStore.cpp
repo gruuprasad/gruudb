@@ -38,7 +38,7 @@ ColumnStore ColumnStore::Create_Naive(const Relation &relation)
 
 ColumnStore ColumnStore::Create_Explicit(std::initializer_list<ColumnBase*> columns)
 {
-    /* TODO 1.3.3 (?) */
+    /* TODO 2.3.1 */
     dbms_unreachable("Not implemented.");
 }
 

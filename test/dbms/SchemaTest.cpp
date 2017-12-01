@@ -5,7 +5,7 @@
 using namespace dbms;
 
 
-TEST_CASE("Attribute/Int4", "[unit]")
+TEST_CASE("Attribute/Int4", "[unit][core]")
 {
     Attribute i4 = Attribute::Int4("myname");
     CHECK(i4.name == "myname");
@@ -13,7 +13,7 @@ TEST_CASE("Attribute/Int4", "[unit]")
     CHECK(i4.type == Attribute::TY_Int);
 }
 
-TEST_CASE("Attribute/Varchar(42)", "[unit]")
+TEST_CASE("Attribute/Varchar(42)", "[unit][core]")
 {
     Attribute varchar = Attribute::Varchar("text", 42);
     CHECK(varchar.name == "text");
@@ -21,7 +21,7 @@ TEST_CASE("Attribute/Varchar(42)", "[unit]")
     CHECK(varchar.type == Attribute::TY_Varchar);
 }
 
-TEST_CASE("Relation", "[unit]")
+TEST_CASE("Relation", "[unit][core]")
 {
     Relation test("test", {
             /* 00 */ Attribute::Int4("A"),

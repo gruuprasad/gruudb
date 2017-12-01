@@ -12,6 +12,7 @@
 #include "dbms/assert.hpp"
 #include "dbms/Schema.hpp"
 #include "dbms/util.hpp"
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <initializer_list>
@@ -73,9 +74,15 @@ struct column_iterator
     column_iterator(column_type &column, std::size_t idx) : column_(column) , idx_(idx) { }
 
     column_iterator & operator++() { ++idx_; return *this; }
+    column_iterator & operator--() { --idx_; return *this; }
     column_iterator operator++(int) {
         column_iterator ret = *this;
         this->operator++();
+        return ret;
+    }
+    column_iterator operator--(int) {
+        column_iterator ret = *this;
+        this->operator--();
         return ret;
     }
 
@@ -127,10 +134,9 @@ struct Char
         assert(i < N);
         data[i] = 0;
     }
-    Char(const Char& other) { std::memcpy(this->data, other.data, N); }
 
-    bool operator==(const Char &other) { return streq(this->data, other.data); }
-    bool operator!=(const Char &other) { return not operator==(other); }
+    bool operator==(const Char &other) const { return streq(this->data, other.data); }
+    bool operator!=(const Char &other) const { return not operator==(other); }
 
     operator const char*() const { return data; }
 
@@ -180,7 +186,7 @@ static_assert(sizeof(Varchar) == sizeof(const char*), "Varchar has incorrect siz
 /**
  * This class implements a row store.  It stores tuples by placing the attributes in row-major order.
  */
-struct RowStore : public Store
+struct RowStore final : public Store
 {
     private:
     RowStore() : data_(nullptr), size_(0), capacity_(0) { }
@@ -238,11 +244,11 @@ struct RowStore : public Store
 
     private:
     void *data_;
-    std::size_t *offsets_; // the offsets of the different attributes within the row
-    std::size_t num_attributes_; // number of attributes
-    std::size_t row_size_; // size of a row in bytes
-    std::size_t size_; // number of used rows
-    std::size_t capacity_; // number of allocated rows
+    std::size_t *offsets_; ///< the offsets of the different attributes within the row
+    std::size_t num_attributes_; ///< number of attributes
+    std::size_t row_size_; ///< size of a row in bytes
+    std::size_t size_; ///< number of used rows
+    std::size_t capacity_; ///< number of allocated rows
 };
 
 
@@ -293,9 +299,9 @@ struct GenericColumn : ColumnBase
 
     protected:
     void *data_;
-    std::size_t size_; // number of stored elements
-    std::size_t capacity_; // number of allocated elements
-    std::size_t elem_size_; // the size of an element in bytes
+    std::size_t size_; ///< number of stored elements
+    std::size_t capacity_; ///< number of allocated elements
+    std::size_t elem_size_; ///< the size of an element in bytes
 };
 
 /**
@@ -325,6 +331,9 @@ struct Column : GenericColumn
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end(); }
 
+    virtual std::size_t size_in_bytes() const { return _size_in_bytes((T*) nullptr); }
+    virtual std::size_t capacity_in_bytes() const { return _capacity_in_bytes((T*) nullptr); }
+
     void push_back(T value);
 
     friend std::ostream & operator<<(std::ostream &out, const Column<T> &column) {
@@ -332,12 +341,28 @@ struct Column : GenericColumn
                    << column.elem_size_ << "B)";
     }
     DECLARE_DUMP_VIRTUAL
+
+    private:
+    template<typename X> std::size_t _size_in_bytes(const X*) const { return size_ * sizeof(X); }
+    template<typename X> std::size_t _capacity_in_bytes(const X*) const { return capacity_ * sizeof(X); }
+    std::size_t _size_in_bytes(const Varchar*) const {
+        std::size_t bytes = GenericColumn::size_in_bytes();
+        for (auto elem : *this)
+            bytes += strlen(elem.value) + 1;
+        return bytes;
+    }
+    std::size_t _capacity_in_bytes(const Varchar*) const {
+        std::size_t bytes = GenericColumn::capacity_in_bytes();
+        for (auto elem : *this)
+            bytes += strlen(elem.value) + 1;
+        return bytes;
+    }
 };
 
 /**
  * This class implements a column store.  It stores tuples by placing the attributes in column-major order.
  */
-struct ColumnStore : public Store
+struct ColumnStore final : public Store
 {
     private:
     ColumnStore() { }

@@ -147,6 +147,28 @@ unsigned Q2(const ColumnStore &store)
 
 }
 
+namespace milestone2 {
+
+unsigned Q2(const ColumnStore &store)
+{
+    /* TODO 2.2.2 */
+    dbms_unreachable("Not implemented.");
+}
+
+unsigned Q3(const ColumnStore &store)
+{
+    /* TODO 2.2.3 */
+    dbms_unreachable("Not implemented.");
+}
+
+unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L)
+{
+    /* TODO 2.2.4 */
+    dbms_unreachable("Not implemented.");
+}
+
+}
+
 }
 
 }
