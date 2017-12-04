@@ -14,9 +14,23 @@
 #include <string>
 #include <unordered_map>
 
+#ifdef __linux__
+#include <sys/resource.h>
+#endif
+
 
 using namespace dbms;
 using namespace std::chrono;
+
+
+#ifdef __linux__
+uint64_t get_memory_reserved()
+{
+    struct rusage r;
+    auto err = getrusage(RUSAGE_SELF, &r);
+    return err ? uint64_t(-1) : r.ru_maxrss;
+}
+#endif
 
 
 int main(int argc, char **argv)
@@ -51,9 +65,23 @@ int main(int argc, char **argv)
     ColumnStore *columnstore = new ColumnStore(ColumnStore::Create_Naive(lineitem));
     /* Fill the column store. */
     Loader::load_LineItem(filename, lineitem, *columnstore, num_rows);
+#ifdef __linux__
+    asm volatile ("" : : : "memory");
+    const auto mem_before = get_memory_reserved();
+#endif
     /* Create the compressed column store. */
     ColumnStore *compressed_columnstore = compress_columnstore_lineitem(lineitem, *columnstore);
+#ifdef __linux__
+    asm volatile ("" : : : "memory");
+    const auto mem_after = get_memory_reserved();
+#endif
     delete columnstore;
+
+#ifdef __linux__
+    const auto mem_compressed = mem_after - mem_before;
+#else
+    const auto mem_compressed = uint64_t(-1);
+#endif
 
     /* Execute the queries. */
     auto Q4 = [=](const ColumnStore &store) { return query::milestone2::Q4(store, O, L); };
@@ -63,7 +91,10 @@ int main(int argc, char **argv)
     auto start = high_resolution_clock::now(); \
     auto result = QUERY(*(STORE)); \
     auto stop = high_resolution_clock::now(); \
-    std::cout << "Milestone2, " #QUERY ", " #STORE ", " << result << ", " << duration_cast<nanoseconds>(stop - start).count() / 1e6 << " ms" << std::endl; \
+    std::cout << "Milestone2, " #QUERY ", " #STORE ", " << result << ", " \
+              << duration_cast<nanoseconds>(stop - start).count() / 1e6 << " ms, " \
+              << mem_compressed / double(1024) << " MiB" \
+              << std::endl; \
 }
     BENCHMARK(Q2, compressed_columnstore);
     BENCHMARK(Q3, compressed_columnstore);
