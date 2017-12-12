@@ -1,5 +1,6 @@
 add_executable(dbms_test
     main.cpp
+    BPlusTreeTest.cpp
     ColumnStoreTest.cpp
     CompressionTest.cpp
     RowStoreTest.cpp

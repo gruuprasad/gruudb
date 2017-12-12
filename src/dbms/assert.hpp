@@ -16,6 +16,7 @@ inline void _assert(const bool pred, const char *filename, const unsigned line, 
     std::cout << std::endl;
 
     abort();
+    __builtin_unreachable();
 }
 #ifndef NDEBUG
 #define _ASSERT2(PRED, MSG) _assert((PRED), __FILE__, __LINE__, #PRED, MSG)
@@ -35,13 +36,10 @@ inline void _assert(const bool pred, const char *filename, const unsigned line, 
     std::cout.flush();
     std::cerr << filename << ':' << line << ": " << msg << std::endl;
     abort();
+    __builtin_unreachable();
 }
 
-#ifndef NDEBUG
 #define dbms_unreachable(MSG) _abort(__FILE__, __LINE__, (MSG))
-#else
-#define dbms_unreachable(MSG) __builtin_unreachable()
-#endif
 
 
 template<typename T>
