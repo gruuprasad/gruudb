@@ -33,6 +33,24 @@ uint64_t get_memory_reserved()
 #endif
 
 
+bool check_size(const Relation &relation, ColumnStore *origin, ColumnStore *compressed)
+{
+    bool is_equal = true;
+
+    for (unsigned i = 0; i != relation.size(); ++i) {
+        GenericColumn &col_origin     = origin->get_column<int>(i);     // XXX: This works but is non-conforming
+        GenericColumn &col_compressed = compressed->get_column<int>(i); // XXX: This works but is non-conforming
+        if (col_origin.size() != col_compressed.size()) {
+            is_equal = false;
+            std::cerr << "ERROR: columns of attribute \"" << relation[i].name << "\" have different size: expected "
+                      << col_origin.size() << ", got " << col_compressed.size() << std::endl;
+        }
+    }
+
+    return is_equal;
+}
+
+
 int main(int argc, char **argv)
 {
     Relation lineitem("lineitem", {
@@ -75,6 +93,11 @@ int main(int argc, char **argv)
     asm volatile ("" : : : "memory");
     const auto mem_after = get_memory_reserved();
 #endif
+
+    /* Check that the compressed column store actually compresses all columns. */
+    if (not check_size(lineitem, columnstore, compressed_columnstore))
+        exit(EXIT_FAILURE);
+
     delete columnstore;
 
 #ifdef __linux__
