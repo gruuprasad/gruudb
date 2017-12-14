@@ -47,6 +47,17 @@ struct rowstore_iterator
     { }
 
     rowstore_iterator & operator++() { row_ += store_.row_size_; return *this; }
+    rowstore_iterator & operator--() { row_ -= store_.row_size_; return *this; }
+    rowstore_iterator & operator++(int) {
+        rowstore_iterator ret = *this;
+        this->operator++();
+        return ret;
+    }
+    rowstore_iterator & operator--(int) {
+        rowstore_iterator ret = *this;
+        this->operator--();
+        return ret;
+    }
 
     void_type operator*() const { return row_; }
 
