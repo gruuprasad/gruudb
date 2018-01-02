@@ -33,17 +33,33 @@ uint64_t get_memory_reserved()
 #endif
 
 
-bool check_size(const Relation &relation, ColumnStore *origin, ColumnStore *compressed)
+bool check_size(const Relation &relation, const ColumnStore *origin, const ColumnStore *compressed)
 {
     bool is_equal = true;
 
     for (unsigned i = 0; i != relation.size(); ++i) {
-        GenericColumn &col_origin     = origin->get_column<int>(i);     // XXX: This works but is non-conforming
-        GenericColumn &col_compressed = compressed->get_column<int>(i); // XXX: This works but is non-conforming
+        const GenericColumn &col_origin     = origin->get_column<int>(i);     // XXX: This works but is non-conforming
+        const GenericColumn &col_compressed = compressed->get_column<int>(i); // XXX: This works but is non-conforming
         if (col_origin.size() != col_compressed.size()) {
             is_equal = false;
             std::cerr << "ERROR: columns of attribute \"" << relation[i].name << "\" have different size: expected "
                       << col_origin.size() << ", got " << col_compressed.size() << std::endl;
+        }
+    }
+
+    return is_equal;
+}
+
+bool check_size(const Relation &relation, const ColumnStore *store, const std::size_t num_rows)
+{
+    bool is_equal = true;
+
+    for (unsigned i = 0; i != relation.size(); ++i) {
+        const GenericColumn &col = store->get_column<int>(i); // XXX: This works but is non-conforming
+        if (col.size() != num_rows) {
+            is_equal = false;
+            std::cerr << "ERROR: column of attribute \"" << relation[i].name << "\" has incorrect size: expected "
+                      << num_rows << ", got " << col.size() << std::endl;
         }
     }
 
@@ -74,7 +90,7 @@ int main(int argc, char **argv)
 
     if (argc != 5)
         errx(EXIT_FAILURE, "Usage: %s <NUM_ROWS> <LINEITEM.tbl> <ORDERKEY> <LINENUMBER>", argv[0]);
-    const std::size_t num_rows = atoll(argv[1]);
+    std::size_t num_rows = atoll(argv[1]);
     const char *filename = argv[2];
     const uint32_t O = atoi(argv[3]);
     const uint32_t L = atoi(argv[4]);
@@ -82,7 +98,7 @@ int main(int argc, char **argv)
     /* Create the column store. */
     ColumnStore *columnstore = new ColumnStore(ColumnStore::Create_Naive(lineitem));
     /* Fill the column store. */
-    Loader::load_LineItem(filename, lineitem, *columnstore, num_rows);
+    num_rows = Loader::load_LineItem(filename, lineitem, *columnstore, num_rows);
 #ifdef __linux__
     asm volatile ("" : : : "memory");
     const auto mem_before = get_memory_reserved();
@@ -99,6 +115,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
 
     delete columnstore;
+
+    if (not check_size(lineitem, compressed_columnstore, num_rows))
+        exit(EXIT_FAILURE);
 
 #ifdef __linux__
     const auto mem_compressed = mem_after - mem_before;
