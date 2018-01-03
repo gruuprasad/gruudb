@@ -25,8 +25,8 @@ struct Dictionary
             if(it.second == value)
 				return it.first;
         }
-        dictionary_table[dictionary_table.size() + 1] = value;
-        return dictionary_table.size() + 1;
+        dictionary_table[dictionary_table.size()] = value;
+        return dictionary_table.size() - 1;
     }
 
     /** Returns the value at the given index in the dictionary. */
@@ -61,8 +61,7 @@ void Column<RLE<T>>::push_back(T value)
 template<typename T>
 void Column<Dictionary<T>>::push_back(T value)
 {
-    /* TODO 2.2.2 */
-    dbms_unreachable("Not implemented.");
+    Base::push_back(dict_(value));
 }
 
 template<typename T>
