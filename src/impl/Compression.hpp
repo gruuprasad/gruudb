@@ -67,8 +67,7 @@ void Column<Dictionary<T>>::push_back(T value)
 template<typename T>
 void Column<RLE<Dictionary<T>>>::push_back(T value)
 {
-    /* TODO 2.2.3 */
-    dbms_unreachable("Not implemented.");
+    Base::push_back(dict_(value));
 }
 
 }
