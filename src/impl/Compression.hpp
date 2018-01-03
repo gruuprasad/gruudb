@@ -1,6 +1,7 @@
 #include "dbms/assert.hpp"
 #include "dbms/Compression.hpp"
 #include <cstdint>
+#include <map>
 
 
 namespace dbms {
@@ -16,18 +17,21 @@ struct Dictionary
     using index_type = uint32_t;
 
     /** Returns the size of the dictionary, i.e. the number of distinct values. */
-    std::size_t size() const { /* TODO 2.2.2 */ dbms_unreachable("Not implemented."); }
+    std::size_t size() const { return dictionary_table.size(); }
 
     /** Returns the index of the given value in the dictionary. */
     index_type operator()(T value) {
-        /* TODO 2.2.2 */
-        dbms_unreachable("Not implemented.");
+        for (auto it : dictionary_table) { 
+            if(it.second == value)
+				return it.first;
+        }
+        dictionary_table[dictionary_table.size() + 1] = value;
+        return dictionary_table.size() + 1;
     }
 
     /** Returns the value at the given index in the dictionary. */
     const T & operator[](index_type idx) const {
-        /* TODO 2.2.2 */
-        dbms_unreachable("Not implemented.");
+        return dictionary_table.at(idx);
     }
 
     friend std::ostream & operator<<(std::ostream &out, const Dictionary<T> &dict) {
@@ -36,7 +40,7 @@ struct Dictionary
     DECLARE_DUMP
 
     private:
-    /* TODO 2.2.2 */
+    std::map<index_type, value_type> dictionary_table;
 };
 
 template<typename T>
