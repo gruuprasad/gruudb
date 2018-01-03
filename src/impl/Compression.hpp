@@ -42,8 +42,16 @@ struct Dictionary
 template<typename T>
 void Column<RLE<T>>::push_back(T value)
 {
-    /* TODO 2.2.1 */
-    dbms_unreachable("Not implemented.");
+    if (size_ == capacity_)
+        reserve(size_ + capacity_ + capacity_ / 2);
+    auto it = runs_end();
+    if (size_ != 0 && (--it)->value == value) 
+        it->count++;
+    else {
+        new (run_iterator(*this, size_).operator->()) RLE<T>(value);
+        size_++;
+    }
+    num_rows_++;
 }
 
 template<typename T>
