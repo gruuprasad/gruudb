@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <err.h>
 #include <iostream>
+#include <random>
 #include <string>
 #include <unordered_map>
 
@@ -66,6 +67,34 @@ bool check_size(const Relation &relation, const ColumnStore *store, const std::s
     return is_equal;
 }
 
+void modify_columns(const Relation &relation, ColumnStore *store)
+{
+    std::random_device rd;
+    std::uniform_int_distribution<int> dist(0, 9);
+    int n = dist(rd);
+
+#define ADD(NAME, TYPE, VALUE) store->get_column<TYPE>(relation[NAME].offset()).push_back(VALUE);
+    while (n--) {
+        ADD("returnflag",    uint8_t,  42);
+        ADD("extendedprice", uint64_t, 42);
+        ADD("linestatus",    uint8_t,  42);
+        ADD("tax",           uint64_t, 42);
+        ADD("orderkey",      uint32_t, 42);
+        ADD("discount",      uint64_t, 42);
+        ADD("shipinstruct",  Char<26>, "DONT CHEAT");
+        ADD("partkey",       uint32_t, 42);
+        ADD("suppkey",       uint32_t, 42);
+        ADD("commitdate",    uint32_t, 42);
+        ADD("receiptdate",   uint32_t, 42);
+        ADD("shipdate",      uint32_t, 42);
+        ADD("linenumber",    uint32_t, 42);
+        ADD("shipmode",      Char<11>, "DONT CHEAT");
+        ADD("comment",       Char<45>, "DONT CHEAT");
+        ADD("quantity",      uint64_t, 42);
+    }
+#undef ADD
+}
+
 
 int main(int argc, char **argv)
 {
@@ -114,8 +143,12 @@ int main(int argc, char **argv)
     if (not check_size(lineitem, columnstore, compressed_columnstore))
         exit(EXIT_FAILURE);
 
+    /* Manipulate the columns of the original store. */
+    modify_columns(lineitem, columnstore);
+
     delete columnstore;
 
+    /* Check that the size of the compressed column store did not change. */
     if (not check_size(lineitem, compressed_columnstore, num_rows))
         exit(EXIT_FAILURE);
 
