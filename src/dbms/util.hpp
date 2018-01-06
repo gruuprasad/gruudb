@@ -43,11 +43,14 @@ inline bool streq(const char *first, const char *second) { return 0 == strcmp(fi
 
 struct StrHash
 {
-    size_t operator()(const char *c_str) const {
-        size_t hash = 5381;
+    std::size_t operator()(const char *c_str) const {
+        /* FNV-1a 64 bit */
+        std::size_t hash = 0xcbf29ce484222325;
         char c;
-        while ((c = *c_str++))
-            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+        while ((c = *c_str++)) {
+            hash = hash ^ c;
+            hash = hash * 1099511628211;
+        }
         return hash;
     }
 };

@@ -15,6 +15,8 @@ struct Loader
                                      const std::size_t max_rows = std::numeric_limits<std::size_t>::max());
     static std::size_t load_LineItem(const char *filename, const Relation &relation, ColumnStore &store,
                                      const std::size_t max_rows = std::numeric_limits<std::size_t>::max());
+    static std::size_t load_Orders(const char *filename, const Relation &relation, ColumnStore &store,
+                                   const std::size_t max_rows = std::numeric_limits<std::size_t>::max());
 
     Loader(const char *filename, const int delimiter);
     ~Loader();

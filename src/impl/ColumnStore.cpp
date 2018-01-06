@@ -6,7 +6,7 @@ using namespace dbms;
 
 void GenericColumn::reserve(std::size_t new_cap)
 {
-    if (new_cap > capacity()) {
+    if (new_cap > capacity_) {
         void *new_data_ = realloc(data_, elem_size_ * new_cap);
         if (new_data_ != NULL) {
             data_ = new_data_;
@@ -28,9 +28,9 @@ ColumnStore ColumnStore::Create_Naive(const Relation &relation)
 
     for (auto attr: relation) { 
       if (attr.type == Attribute::TY_Varchar)
-        column_store.columns_.push_back(new GenericColumn(sizeof(void*)));
+          column_store.columns_.push_back(static_cast<ColumnBase *>(new Column<Varchar>()));
       else 
-        column_store.columns_.push_back(new GenericColumn(attr.size));
+          column_store.columns_.push_back(static_cast<ColumnBase *>(new GenericColumn(attr.size)));
     }
 
     return column_store;
@@ -38,8 +38,12 @@ ColumnStore ColumnStore::Create_Naive(const Relation &relation)
 
 ColumnStore ColumnStore::Create_Explicit(std::initializer_list<ColumnBase*> columns)
 {
-    /* TODO 1.3.3 (?) */
-    dbms_unreachable("Not implemented.");
+    ColumnStore column_store;
+
+    for (auto column: columns)
+        column_store.columns_.push_back(column);
+
+    return column_store;
 }
 
 std::size_t ColumnStore::size_in_bytes() const

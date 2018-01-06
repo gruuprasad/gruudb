@@ -21,7 +21,7 @@ Relation relation("relation", {
 
 }
 
-TEST_CASE("RowStore/Naive", "[unit]")
+TEST_CASE("RowStore/Naive", "[unit][milestone1]")
 {
     RowStore store = RowStore::Create_Naive(relation);
 
@@ -94,7 +94,7 @@ TEST_CASE("RowStore/Naive", "[unit]")
     }
 }
 
-TEST_CASE("RowStore/Optimized", "[unit]")
+TEST_CASE("RowStore/Optimized", "[unit][milestone1]")
 {
     RowStore store = RowStore::Create_Optimized(relation);
 
