@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <err.h>
 #include <iostream>
+#include <random>
 #include <string>
 #include <unordered_map>
 
@@ -33,13 +34,13 @@ uint64_t get_memory_reserved()
 #endif
 
 
-bool check_size(const Relation &relation, ColumnStore *origin, ColumnStore *compressed)
+bool check_size(const Relation &relation, const ColumnStore *origin, const ColumnStore *compressed)
 {
     bool is_equal = true;
 
     for (unsigned i = 0; i != relation.size(); ++i) {
-        GenericColumn &col_origin     = origin->get_column<int>(i);     // XXX: This works but is non-conforming
-        GenericColumn &col_compressed = compressed->get_column<int>(i); // XXX: This works but is non-conforming
+        const GenericColumn &col_origin     = origin->get_column<int>(i);     // XXX: This works but is non-conforming
+        const GenericColumn &col_compressed = compressed->get_column<int>(i); // XXX: This works but is non-conforming
         if (col_origin.size() != col_compressed.size()) {
             is_equal = false;
             std::cerr << "ERROR: columns of attribute \"" << relation[i].name << "\" have different size: expected "
@@ -48,6 +49,50 @@ bool check_size(const Relation &relation, ColumnStore *origin, ColumnStore *comp
     }
 
     return is_equal;
+}
+
+bool check_size(const Relation &relation, const ColumnStore *store, const std::size_t num_rows)
+{
+    bool is_equal = true;
+
+    for (unsigned i = 0; i != relation.size(); ++i) {
+        const GenericColumn &col = store->get_column<int>(i); // XXX: This works but is non-conforming
+        if (col.size() != num_rows) {
+            is_equal = false;
+            std::cerr << "ERROR: column of attribute \"" << relation[i].name << "\" has incorrect size: expected "
+                      << num_rows << ", got " << col.size() << std::endl;
+        }
+    }
+
+    return is_equal;
+}
+
+void modify_columns(const Relation &relation, ColumnStore *store)
+{
+    std::random_device rd;
+    std::uniform_int_distribution<int> dist(0, 9);
+    int n = dist(rd);
+
+#define ADD(NAME, TYPE, VALUE) store->get_column<TYPE>(relation[NAME].offset()).push_back(VALUE);
+    while (n--) {
+        ADD("returnflag",    uint8_t,  42);
+        ADD("extendedprice", uint64_t, 42);
+        ADD("linestatus",    uint8_t,  42);
+        ADD("tax",           uint64_t, 42);
+        ADD("orderkey",      uint32_t, 42);
+        ADD("discount",      uint64_t, 42);
+        ADD("shipinstruct",  Char<26>, "DONT CHEAT");
+        ADD("partkey",       uint32_t, 42);
+        ADD("suppkey",       uint32_t, 42);
+        ADD("commitdate",    uint32_t, 42);
+        ADD("receiptdate",   uint32_t, 42);
+        ADD("shipdate",      uint32_t, 42);
+        ADD("linenumber",    uint32_t, 42);
+        ADD("shipmode",      Char<11>, "DONT CHEAT");
+        ADD("comment",       Char<45>, "DONT CHEAT");
+        ADD("quantity",      uint64_t, 42);
+    }
+#undef ADD
 }
 
 
@@ -74,7 +119,7 @@ int main(int argc, char **argv)
 
     if (argc != 5)
         errx(EXIT_FAILURE, "Usage: %s <NUM_ROWS> <LINEITEM.tbl> <ORDERKEY> <LINENUMBER>", argv[0]);
-    const std::size_t num_rows = atoll(argv[1]);
+    std::size_t num_rows = atoll(argv[1]);
     const char *filename = argv[2];
     const uint32_t O = atoi(argv[3]);
     const uint32_t L = atoi(argv[4]);
@@ -82,7 +127,7 @@ int main(int argc, char **argv)
     /* Create the column store. */
     ColumnStore *columnstore = new ColumnStore(ColumnStore::Create_Naive(lineitem));
     /* Fill the column store. */
-    Loader::load_LineItem(filename, lineitem, *columnstore, num_rows);
+    num_rows = Loader::load_LineItem(filename, lineitem, *columnstore, num_rows);
 #ifdef __linux__
     asm volatile ("" : : : "memory");
     const auto mem_before = get_memory_reserved();
@@ -98,7 +143,14 @@ int main(int argc, char **argv)
     if (not check_size(lineitem, columnstore, compressed_columnstore))
         exit(EXIT_FAILURE);
 
+    /* Manipulate the columns of the original store. */
+    modify_columns(lineitem, columnstore);
+
     delete columnstore;
+
+    /* Check that the size of the compressed column store did not change. */
+    if (not check_size(lineitem, compressed_columnstore, num_rows))
+        exit(EXIT_FAILURE);
 
 #ifdef __linux__
     const auto mem_compressed = mem_after - mem_before;
