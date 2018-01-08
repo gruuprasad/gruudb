@@ -38,8 +38,12 @@ ColumnStore ColumnStore::Create_Naive(const Relation &relation)
 
 ColumnStore ColumnStore::Create_Explicit(std::initializer_list<ColumnBase*> columns)
 {
-    /* TODO 2.3.1 */
-    dbms_unreachable("Not implemented.");
+    ColumnStore column_store;
+
+    for (auto column: columns)
+        column_store.columns_.push_back(column);
+
+    return column_store;
 }
 
 std::size_t ColumnStore::size_in_bytes() const
