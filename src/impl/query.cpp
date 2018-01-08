@@ -1,6 +1,7 @@
 #include "dbms/Store.hpp"
 #include "dbms/util.hpp"
 #include "impl/ColumnStore.hpp"
+#include "impl/Compression.hpp"
 #include "impl/RowStore.hpp"
 #include <unordered_map>
 #include <chrono>
@@ -151,20 +152,83 @@ namespace milestone2 {
 
 unsigned Q2(const ColumnStore &store)
 {
-    /* TODO 2.2.2 */
-    dbms_unreachable("Not implemented.");
+    unsigned result = 0;
+    std::vector<unsigned> mode_count{0, 0, 0, 0, 0, 0, 0};
+    auto it_13 = store.get_column<RLE<Char<11>>>(13).cbegin();
+    auto end_13 = store.get_column<RLE<Char<11>>>(13).cend();
+
+    while (it_13 != end_13) {
+       switch (static_cast<char>((*it_13).data[0])) {
+            case 'T':
+                ++mode_count[0];
+                break;
+            case 'M':
+                ++mode_count[1];
+                break;
+            case 'A':
+                ++mode_count[2];
+                break;
+            case 'F':
+                ++mode_count[3];
+                break;
+            case 'S':
+                ++mode_count[4];
+                break;
+            case 'R':
+                if (static_cast<char>((*it_13).data[1])  == 'E')
+                    ++mode_count[5];
+                else
+                    ++mode_count[6];
+                break;
+            default:
+                std::cout << *it_13 << std::endl;
+                exit(1);
+        }
+       ++it_13;
+    }
+    
+    for (auto it : mode_count)
+        result = std::max(result, it);
+
+    return result;
 }
 
 unsigned Q3(const ColumnStore &store)
 {
-    /* TODO 2.2.3 */
-    dbms_unreachable("Not implemented.");
+    const uint32_t start_date = date_to_int(1993, 1, 1);
+    const uint32_t end_date = date_to_int(1993, 31, 12);
+
+    unsigned result = 0;
+
+    auto it_11 = store.get_column<RLE<uint32_t>>(11).cbegin();
+    auto end_11 = store.get_column<RLE<uint32_t>>(11).cend();
+    auto it_15 = store.get_column<RLE<uint64_t>>(15).cbegin();
+    
+    while (it_11 != end_11) {
+        if (*it_11 >= start_date && *it_11 <= end_date)
+            result += *it_15;
+        ++it_11; ++it_15;
+    }
+    
+    return result;
+ 
 }
 
 unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L)
 {
-    /* TODO 2.2.4 */
-    dbms_unreachable("Not implemented.");
+    unsigned result = 0;
+
+    auto it_4 = store.get_column<RLE<uint32_t>>(4).cbegin();
+    auto end_4 = store.get_column<RLE<uint32_t>>(4).cend();
+    auto it_12 = store.get_column<RLE<uint32_t>>(12).cbegin();
+    auto it_14 = store.get_column<RLE<Char<45>>>(14).cbegin();
+
+    while (it_4 != end_4) {
+        if (*it_4 == O && *it_12 == L)
+            return (unsigned)strlen(*it_14);
+        ++it_4; ++it_12; ++it_14;
+    }
+    return result;
 }
 
 }
