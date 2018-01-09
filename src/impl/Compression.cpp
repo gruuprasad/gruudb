@@ -14,7 +14,7 @@ ColumnStore * dbms::compress_columnstore_lineitem(const Relation &relation, cons
     Column<RLE<uint64_t>> * col3 = new Column<RLE<uint64_t>>();
     Column<RLE<uint32_t>> * col4 = new Column<RLE<uint32_t>>();
     Column<RLE<uint64_t>> * col5 = new Column<RLE<uint64_t>>();
-    Column<RLE<Char<26>>> * col6 = new Column<RLE<Char<26>>>();
+    Column<Dictionary<Char<26>>> * col6 = new Column<Dictionary<Char<26>>>();
     Column<RLE<uint32_t>> * col7 = new Column<RLE<uint32_t>>();
     Column<RLE<uint32_t>> * col8 = new Column<RLE<uint32_t>>();
     Column<RLE<uint32_t>> * col9 = new Column<RLE<uint32_t>>();
