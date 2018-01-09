@@ -154,31 +154,31 @@ unsigned Q2(const ColumnStore &store)
 {
     unsigned result = 0;
     std::vector<unsigned> mode_count{0, 0, 0, 0, 0, 0, 0};
-    auto it_13 = store.get_column<RLE<Char<11>>>(13).cbegin();
-    auto end_13 = store.get_column<RLE<Char<11>>>(13).cend();
+    auto it_13 = store.get_column<RLE<Char<11>>>(13).runs_begin();
+    auto end_13 = store.get_column<RLE<Char<11>>>(13).runs_end();
 
     while (it_13 != end_13) {
-       switch (static_cast<char>((*it_13).data[0])) {
+       switch (static_cast<char>((it_13->value).data[0])) {
             case 'T':
-                ++mode_count[0];
+                mode_count[0] += it_13->count;
                 break;
             case 'M':
-                ++mode_count[1];
+                mode_count[1] += it_13->count;
                 break;
             case 'A':
-                ++mode_count[2];
+                mode_count[2] += it_13->count;
                 break;
             case 'F':
-                ++mode_count[3];
+                mode_count[3] += it_13->count;
                 break;
             case 'S':
-                ++mode_count[4];
+                mode_count[4] += it_13->count;
                 break;
             case 'R':
-                if (static_cast<char>((*it_13).data[1])  == 'E')
-                    ++mode_count[5];
+                if (static_cast<char>((it_13->value).data[1])  == 'E')
+                    mode_count[5] += it_13->count;
                 else
-                    ++mode_count[6];
+                    mode_count[6] += it_13->count;
                 break;
             default:
                 std::cout << *it_13 << std::endl;
@@ -221,7 +221,7 @@ unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L)
     auto it_4 = store.get_column<RLE<uint32_t>>(4).cbegin();
     auto end_4 = store.get_column<RLE<uint32_t>>(4).cend();
     auto it_12 = store.get_column<RLE<uint32_t>>(12).cbegin();
-    auto it_14 = store.get_column<RLE<Char<45>>>(14).cbegin();
+    auto it_14 = store.get_column<Char<45>>(14).cbegin();
 
     while (it_4 != end_4) {
         if (*it_4 == O && *it_12 == L)

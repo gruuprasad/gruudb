@@ -17,12 +17,12 @@ ColumnStore * dbms::compress_columnstore_lineitem(const Relation &relation, cons
     Column<Dictionary<Char<26>>> * col6 = new Column<Dictionary<Char<26>>>();
     Column<RLE<uint32_t>> * col7 = new Column<RLE<uint32_t>>();
     Column<RLE<uint32_t>> * col8 = new Column<RLE<uint32_t>>();
-    Column<RLE<uint32_t>> * col9 = new Column<RLE<uint32_t>>();
-    Column<RLE<uint32_t>> * col10 = new Column<RLE<uint32_t>>();
+    Column<Dictionary<uint32_t>> * col9 = new Column<Dictionary<uint32_t>>();
+    Column<Dictionary<uint32_t>> * col10 = new Column<Dictionary<uint32_t>>();
     Column<RLE<uint32_t>> * col11 = new Column<RLE<uint32_t>>();
     Column<RLE<uint32_t>> * col12 = new Column<RLE<uint32_t>>();
     Column<RLE<Char<11>>> * col13 = new Column<RLE<Char<11>>>();
-    Column<RLE<Char<45>>> * col14 = new Column<RLE<Char<45>>>();
+    Column<Char<45>> * col14 = new Column<Char<45>>();
     Column<RLE<uint64_t>> * col15 = new Column<RLE<uint64_t>>();
 
     auto orig_col0_it = store.get_column<uint8_t>(0).begin();
