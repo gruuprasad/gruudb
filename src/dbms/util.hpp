@@ -59,3 +59,24 @@ struct StrEqual
 {
     bool operator()(const char *first, const char *second) const { return streq(first, second); }
 };
+
+struct Murmur3
+{
+    uint32_t operator()(uint32_t v) const {
+        v ^= v >> 16;
+        v *= 0x85ebca6b;
+        v ^= v >> 13;
+        v *= 0xc2b2ae35;
+        v ^= v >> 16;
+        return v;
+    }
+
+    uint64_t operator()(uint64_t v) const {
+        v ^= v >> 33;
+        v *= 0xff51afd7ed558ccd;
+        v ^= v >> 33;
+        v *= 0xc4ceb9fe1a85ec53;
+        v ^= v >> 33;
+        return v;
+    }
+};

@@ -1,3 +1,4 @@
+#include "dbms/query.hpp"
 #include "dbms/Store.hpp"
 #include "dbms/util.hpp"
 #include "impl/ColumnStore.hpp"
@@ -229,6 +230,28 @@ unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L)
         ++it_4; ++it_12; ++it_14;
     }
     return result;
+}
+
+}
+
+namespace milestone3 {
+
+unsigned Q3(const ColumnStore &store, shipdate_index_type &index)
+{
+    /* TODO 3.3.1 */
+    dbms_unreachable("Not implemented.");
+}
+
+unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L, primary_index_type &index)
+{
+    /* TODO 3.3.2 */
+    dbms_unreachable("Not implemented.");
+}
+
+unsigned Q5(const ColumnStore &lineitem, const ColumnStore &orders)
+{
+    /* TODO 3.3.3 */
+    dbms_unreachable("Not implemented.");
 }
 
 }
