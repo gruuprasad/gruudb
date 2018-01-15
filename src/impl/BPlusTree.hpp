@@ -38,24 +38,27 @@ struct BPlusTree
         using pointer_type = std::conditional_t<is_const, const_pointer, pointer>;
         using reference_type = std::conditional_t<is_const, const_reference, reference>;
 
-        the_iterator() { /* TODO 3.2.3 */ }
+        the_iterator(pointer_type &pair, std::size_t idx ) : pair_(pair), idx_(idx) { }
 
         /** Compare this iterator with an other iterator for equality. */
-        bool operator==(the_iterator other) const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
-        bool operator!=(the_iterator other) const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
+        bool operator==(the_iterator other) const { return (this->idx_ == other.idx_)&&(this->pair.first() == other->pair.first())&&(this->pair.second() == other->pair.second()) ;}
+        bool operator!=(the_iterator other) const { not operator==(other); }
 
         /** Advance the iterator to the next element. */
         the_iterator & operator++() {
-            /* TODO 3.2.3 */
-            dbms_unreachable("Not implemented.");
+           ++idx_; return *this;
         }
 
         /** Return a pointer to the designated element. */
-        pointer_type operator->() const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
+        pointer_type operator->() const { return & this->operator*(); }
         /** Return a reference to the designated element */
         reference_type operator*() const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
 
         /* TODO 3.2.3 - declare fields */
+        private:
+            pointer_type &pair_;
+            std::size_t idx_;
+            
     };
     public:
     using iterator = the_iterator<false>;
@@ -96,23 +99,31 @@ struct BPlusTree
     
     struct inner_node : node
     {
-        /* TODO 3.2.1 */
-        
      private :
         
         inner_node() : first_child_node(nullptr) is_leaf(false)  {}
     
     public:
         
-        void insert(key_type key, node *right_node)
-        {
-            map.push_back(std::make_pair(key, right_node));
+        ~inner_node()
+        { 
+            for( auto element : map)
+                delete map.second;
+            delete first_child_node;
         }
         
-        inner_node(node *first_lower_node)
+        void insert(node *node)
         {
-            first_child_node = first_lower_node;
+            if(first_child_node != nullptr)
+            {
+                map.push_back(std::make_pair(node.first_key(), node));
+            }
+            else
+            {
+                first_child_node = node;
+            }
         }
+        
         
         // check if it contains k elements 
         
@@ -149,13 +160,14 @@ struct BPlusTree
 
     struct leaf_node : node
     {
-        /* TODO 3.2.1 */
         
     private :
         
         leaf_node() : next_leaf_node(nullptr) is_leaf(true) {}
         
     public:
+        
+        ~leaf_node() { delete next_leaf_node; }
         
         void insert(value_type element)
         {
@@ -187,73 +199,74 @@ struct BPlusTree
     /*--- Factory methods --------------------------------------------------------------------------------------------*/
     template<typename It>
     static BPlusTree Bulkload(It begin, It end) {
-        /* TODO 3.2.2 */
-       
-        
+
        int size_inode = 5;
        int size_leaf = 10;
-       inner_node *current_root;
        leaf_node *current_leaf;
-       
-       current_root = nullptr;
+       // list of last node of each row of the B+ tree
+       std::vector<node*> map_last_node;
        current_leaf = new leaf_node();
+       
+       // we can check if our B+ tree is ok if the size of this map is equal to the theoric height if the B+ tree 
+       map_last_node.push_back(new inner_node().insert(current_leaf));
        
        for(It it = begin; it!=end; ++it)
        {
-           if(current_root != nullptr)
-           {
-                current_leaf->insert(std::make_pair(it->first,it->second));
-                /* check if the current leaf_node is full */
-                if(current_leaf->contains(size_leaf))
+           /* check if the current leaf_node is full */
+            if(current_leaf->contains(size_leaf))
+            {
+                /* reset the current_leaf node to an empty one */
+                leaf_node *new_leaf = new leaf_node();
+                current_leaf.insert_next_leaf(new_leaf);
+                current_leaf = new_leaf;
+                current_leaf->insert(*it);
+                
+                // node who is going to be inserted in the upper node
+                node * current_new_node = current_leaf;
+                
+                /* update all upper node */
+                for(auto node_iterator= map_last_node.begin(); node_iterator!=end(); node_iterator++)
                 {
-                    /* if current root is full */
-                    if(current_root.contains(size_inode))
+                    // if current parrent full
+                    if(node_iterator->contains(size_inode))
                     {
-                        /* create a new root node based on the previous one */
-                        current_root =  new inner_node(current_root);
-                        /* reset the current_leaf node to an empty one */
-                        current_leaf = new leaf_node();
-                    } 
-                    // we can still insert in the current root
+                        if(node_iterator == map_last_node.back())
+                        {
+                            map_last_node.push_back(new inner_node().insert(*node_iterator));
+                        }
+                        inner_node *new_node = new inner_node();
+                        new_node.insert(current_new_node);
+                        current_new_node = new_node;
+                        *node_iterator = new_node;
+                    }
                     else
                     {
-                        /* if child pointers are nodes */
-                        if(current_root->is_child_leaf())
-                        {
-                            current_root.insert(current_leaf->first_key(),current_leaf);
-                        }
-                        else
-                        {
-                            /* build the tree with the length of highest node */
-                        }
+                        node_iterator->insert(current_new_node);
+                        break;
                     }
                 }
-           }
-           else
-           {
-               current_leaf->insert(std::make_pair(it->first,it->second));
-               /* check if the first leaf_node is full */
-               if(current_leaf->contains(size_leaf))
-               {
-                   /* create the inner_node */
-                    current_root =  new inner_node(current_leaf);
-                    /* reset the current_leaf node to an empty one */
-                    current_leaf = new leaf_node();
-               }
-           }
+            }
+            else
+            {
+                current_leaf->insert(std::make_pair(it->first,it->second));
+            }
        }
+       
+       // root node is the last element of map_last_node
+        static BPlusTree bptree(map_last_node.back());
+        return bptree;
     }
 
 
     /*--- Start of B+-Tree code --------------------------------------------------------------------------------------*/
     private:
-    BPlusTree(/* TODO 3.2.2 */) { /* TODO 3.2.2 */ dbms_unreachable("Not implemented."); }
+    BPlusTree(node * the_root_node) { root_node = the_root_node; }
 
     public:
     BPlusTree(const BPlusTree&) = delete;
     BPlusTree(BPlusTree&&) = default;
 
-    ~BPlusTree() { /* TODO 3.2.1 */ dbms_unreachable("Not implemented."); }
+    ~BPlusTree() { delete root_node; }
 
 
     iterator begin() { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
@@ -282,7 +295,6 @@ struct BPlusTree
     }
 
     private:
-    /* TODO 3.2.1 - declare fields */
     inner_node *root_node;
 };
 
