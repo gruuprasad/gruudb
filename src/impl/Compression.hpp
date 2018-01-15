@@ -10,11 +10,11 @@ namespace dbms {
  * This class implements a generic dictionary.
  * It keeps an internal bi-directional mapping from input value to dictionary index.
  */
-template<typename T>
+template<typename T, typename S>
 struct Dictionary
 {
     using value_type = T;
-    using index_type = uint32_t;
+    using index_type = S;
 
     /** Returns the size of the dictionary, i.e. the number of distinct values. */
     std::size_t size() const { return dictionary_table.size(); }
@@ -58,14 +58,14 @@ void Column<RLE<T>>::push_back(T value)
     num_rows_++;
 }
 
-template<typename T>
-void Column<Dictionary<T>>::push_back(T value)
+template<typename T, typename S>
+void Column<Dictionary<T, S>>::push_back(T value)
 {
     Base::push_back(dict_(value));
 }
 
-template<typename T>
-void Column<RLE<Dictionary<T>>>::push_back(T value)
+template<typename T, typename S>
+void Column<RLE<Dictionary<T, S>>>::push_back(T value)
 {
     Base::push_back(dict_(value));
 }

@@ -24,7 +24,7 @@ struct RLE
     uint32_t count;
 };
 
-template<typename T>
+template<typename T, typename S = uint32_t>
 struct Dictionary;
 
 namespace iterator {
@@ -145,35 +145,35 @@ struct Column<RLE<T>> : GenericColumn
 /**
  * Specialize Column for generic dictionary compression.
  */
-template<typename T>
-struct Column<Dictionary<T>> : public Column<typename Dictionary<T>::index_type>
+template<typename T, typename S>
+struct Column<Dictionary<T, S>> : public Column<typename Dictionary<T, S>::index_type>
 {
-    using Base = Column<typename Dictionary<T>::index_type>;
-    using dictionary_type = Dictionary<T>;
+    using dictionary_type = Dictionary<T, S>;
+    using Base = Column<typename dictionary_type::index_type>;
 
     /** Appends an element at the end of the column. */
     void push_back(T value);
 
     /** Returns the underlying dictionary. */
-    const Dictionary<T> & get_dictionary() const { return dict_; }
+    const dictionary_type & get_dictionary() const { return dict_; }
 
-    friend std::ostream & operator<<(std::ostream &out, const Column<Dictionary<T>> &column) {
+    friend std::ostream & operator<<(std::ostream &out, const Column &column) {
         return out << "Column<Dictionary<" << typeid(T).name() << "> (" << column.size() << '/' << column.capacity()
                    << " elements, " << column.dict_.size() << " dictionary entries)";
     }
     DECLARE_DUMP_VIRTUAL
 
     private:
-    Dictionary<T> dict_;
+    dictionary_type dict_;
 };
 
 /**
  * Specialize the RLE column for dictionary compression.
  */
-template<typename T>
-struct Column<RLE<Dictionary<T>>> : public Column<RLE<typename Dictionary<T>::index_type>>
+template<typename T, typename S>
+struct Column<RLE<Dictionary<T, S>>> : public Column<RLE<typename Dictionary<T, S>::index_type>>
 {
-    using dictionary_type = Dictionary<T>;
+    using dictionary_type = Dictionary<T, S>;
     using rle_type = RLE<typename dictionary_type::index_type>;
     using Base = Column<rle_type>;
 
@@ -181,12 +181,12 @@ struct Column<RLE<Dictionary<T>>> : public Column<RLE<typename Dictionary<T>::in
     void push_back(T value);
 
     /** Returns the underlying dictionary. */
-    const Dictionary<T> & get_dictionary() const { return dict_; }
+    const dictionary_type & get_dictionary() const { return dict_; }
 
     virtual std::size_t size_in_bytes() const { return Base::size_in_bytes() + dict_.size() * sizeof(T); }
     virtual std::size_t capacity_in_bytes() const { return Base::capacity_in_bytes() + dict_.size() * sizeof(T); }
 
-    friend std::ostream & operator<<(std::ostream &out, const Column<RLE<Dictionary<T>>> &column) {
+    friend std::ostream & operator<<(std::ostream &out, const Column &column) {
         return out << "Column<RLE<Dictionary<" << typeid(T).name() << "> (" << column.size() << '/'
                    << column.capacity() << " elements, " << column.dict_.size() << " dictionary entries, "
                    << column.num_runs() << " runs)";
@@ -194,7 +194,7 @@ struct Column<RLE<Dictionary<T>>> : public Column<RLE<typename Dictionary<T>::in
     DECLARE_DUMP_VIRTUAL
 
     private:
-    Dictionary<T> dict_;
+    dictionary_type dict_;
 };
 
 /** This method takes a ColumnStore and its Relation, and returns a new, compressed ColumnStore instance. */

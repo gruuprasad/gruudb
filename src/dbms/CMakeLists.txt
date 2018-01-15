@@ -14,3 +14,6 @@ target_link_libraries(benchmark_compression dbms impl)
 
 add_executable(load_compressed load_compressed.cpp)
 target_link_libraries(load_compressed dbms impl)
+
+add_executable(benchmark_indices benchmark_indices.cpp)
+target_link_libraries(benchmark_indices dbms impl)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "dbms/assert.hpp"
 #include "dbms/Store.hpp"
 #include <cstdint>
 #include <cstdio>

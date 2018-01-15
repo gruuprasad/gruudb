@@ -1,7 +1,9 @@
 add_executable(dbms_test
     main.cpp
+    BPlusTreeTest.cpp
     ColumnStoreTest.cpp
     CompressionTest.cpp
+    HashTableTest.cpp
     RowStoreTest.cpp
     SchemaTest.cpp
     UtilTest.cpp
