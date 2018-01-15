@@ -93,15 +93,94 @@ struct BPlusTree
     using const_range = the_range<true>;
 
     /*--- Tree Node Data Types ---------------------------------------------------------------------------------------*/
-    struct inner_node
+    
+    struct inner_node : node
     {
         /* TODO 3.2.1 */
-        /* demo pull request : I will add code there */
+        
+     private :
+        
+        inner_node() : first_child_node(nullptr) is_leaf(false)  {}
+    
+    public:
+        
+        void insert(key_type key, node *right_node)
+        {
+            map.push_back(std::make_pair(key, right_node));
+        }
+        
+        inner_node(node *first_lower_node)
+        {
+            first_child_node = first_lower_node;
+        }
+        
+        // check if it contains k elements 
+        
+        bool contains(int k)
+        {
+            return (k == map.size());
+        }
+        
+        bool is_child_leaf()
+        {
+            return is_leaf(first_child_node);
+        }
+        
+        key_type first_key()
+        {
+            return ((map.at(0)).first);
+        }
+        
+    private:
+        
+        std::vector<std::pair<key_type, node*>> map;
+        node *first_child_node;
     };
+    
+    struct node
+    {
+        bool is_leaf()
+        {
+            return is_leaf;
+        }
+        
+        bool is_leaf;
+    }
 
-    struct leaf_node
+    struct leaf_node : node
     {
         /* TODO 3.2.1 */
+        
+    private :
+        
+        leaf_node() : next_leaf_node(nullptr) is_leaf(true) {}
+        
+    public:
+        
+        void insert(value_type element)
+        {
+            map.push_back(element);
+        }
+        
+        void insert_next_leaf(leaf_node *next_leaf)
+        {
+            next_leaf_node = next_leaf;
+        }
+        
+        const Key first_key()
+        {
+            return ((map.at(0)).first);
+        }
+        
+        bool contains(int k)
+        {
+            return (k == map.size());
+        }
+        
+        
+    private :
+        std::vector<value_type> map;
+        leaf_node *next_leaf_node;
     };
 
 
@@ -109,7 +188,60 @@ struct BPlusTree
     template<typename It>
     static BPlusTree Bulkload(It begin, It end) {
         /* TODO 3.2.2 */
-        dbms_unreachable("Not implemented.");
+       
+        
+       int size_inode = 5;
+       int size_leaf = 10;
+       inner_node *current_root;
+       leaf_node *current_leaf;
+       
+       current_root = nullptr;
+       current_leaf = new leaf_node();
+       
+       for(It it = begin; it!=end; ++it)
+       {
+           if(current_root != nullptr)
+           {
+                current_leaf->insert(std::make_pair(it->first,it->second));
+                /* check if the current leaf_node is full */
+                if(current_leaf->contains(size_leaf))
+                {
+                    /* if current root is full */
+                    if(current_root.contains(size_inode))
+                    {
+                        /* create a new root node based on the previous one */
+                        current_root =  new inner_node(current_root);
+                        /* reset the current_leaf node to an empty one */
+                        current_leaf = new leaf_node();
+                    } 
+                    // we can still insert in the current root
+                    else
+                    {
+                        /* if child pointers are nodes */
+                        if(current_root->is_child_leaf())
+                        {
+                            current_root.insert(current_leaf->first_key(),current_leaf);
+                        }
+                        else
+                        {
+                            /* build the tree with the length of highest node */
+                        }
+                    }
+                }
+           }
+           else
+           {
+               current_leaf->insert(std::make_pair(it->first,it->second));
+               /* check if the first leaf_node is full */
+               if(current_leaf->contains(size_leaf))
+               {
+                   /* create the inner_node */
+                    current_root =  new inner_node(current_leaf);
+                    /* reset the current_leaf node to an empty one */
+                    current_leaf = new leaf_node();
+               }
+           }
+       }
     }
 
 
@@ -151,6 +283,7 @@ struct BPlusTree
 
     private:
     /* TODO 3.2.1 - declare fields */
+    inner_node *root_node;
 };
 
 }
