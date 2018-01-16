@@ -44,8 +44,13 @@ struct HashTable
 
         /** Advance the iterator to the next element. */
         the_iterator & operator++() {
-            while (container_.table_[idx_].first == false && idx_ < container_.capacity_)
+            if (idx_ == container_.capacity_)
+                return *this;
+            else {
                 idx_++;
+                while (idx_ < container_.capacity_ && container_.table_[idx_].first == false)
+                    idx_++;
+            }
             return *this;
         }
 
@@ -62,14 +67,14 @@ struct HashTable
     using iterator = the_iterator<false>;
     using const_iterator = the_iterator<true>;
 
-    iterator begin() { return iterator(*this, 0); }
+    iterator begin() { return iterator(*this, min_index); }
     iterator end()   { return iterator(*this, capacity_); }
-    const_iterator begin() const { return const_iterrator(*this, 0); }
+    const_iterator begin() const { return const_iterrator(*this, min_index); }
     const_iterator end()   const { return const_iterator(*this, capacity_); }
     const_iterator cbegin() const { return begin(); }
     const_iterator cend()   const { return end(); }
 
-    HashTable(std::size_t capacity = 1024): table_(nullptr), size_(0), capacity_(capacity) 
+    HashTable(std::size_t capacity = 1024): table_(nullptr), size_(0), capacity_(capacity), min_index(capacity)
     {
         table_ = new std::pair<bool, key_type>[capacity];
     }
@@ -83,9 +88,9 @@ struct HashTable
 
     std::size_t find_helper(const key_type &key) {
         std::size_t index = hasher{}(key) % capacity_;
-        while (table_[index].second != key && table_[index].first == true)
+        while (!key_equal{}(table_[index].second, key) && table_[index].first == true)
             index = (index + 1) % capacity_;
-        if (table_[index].second == key) 
+        if (key_equal{}(table_[index].second, key)) 
             return index;
         else
             return capacity_;
@@ -109,25 +114,58 @@ struct HashTable
             return const_iterator(*this, index); 
     }
 
-    /** Returns an iterator to the element in the table and a flag whether insertion succeeded.  The flag is true, if
-     * the element was newly inserted into the table, and false otherwise.  The iterator designates the newly inserted
-     * element respectively the element already present in the table. */
-    std::pair<iterator, bool> insert(const key_type &key) {
+    double load_factor() {
+        return (double) size() / capacity();
+    }
+
+    private:
+    std::pair<std::size_t, bool> insert_helper(const key_type &key) {
         std::size_t index = hasher{}(key) % capacity_;
+        if (index < min_index)
+            min_index = index;
         while (table_[index].first == true) {
-            if (table_[index].second == key)
-                return std::make_pair(iterator(*this, index), false);
+            if (key_equal{}(table_[index].second, key))
+                return std::make_pair(index, false);
             ++index;
         }
         table_[index] = std::make_pair(true, key);
         size_++;
-        return std::make_pair(iterator(*this, index), true);
+        return std::make_pair(index, true);
+    }
+
+    void resize() {
+        std::size_t old_capacity = capacity_;
+        std::pair<bool, key_type> * old_table = table_;
+        capacity_ += capacity_ / 2;
+        size_ = 0;
+        table_ = new std::pair<bool, key_type>[capacity_];
+
+        for (std::size_t i = 0; i < old_capacity; ++i) {
+            if (old_table[i].first == true) 
+                insert_helper(old_table[i].second);
+        }
+
+        delete[] old_table;
+    }
+
+    public:
+
+    /** Returns an iterator to the element in the table and a flag whether insertion succeeded.  The flag is true, if
+     * the element was newly inserted into the table, and false otherwise.  The iterator designates the newly inserted
+     * element respectively the element already present in the table. */
+    std::pair<iterator, bool> insert(const key_type &key) {
+        if (load_factor() > .75) {
+            resize();
+        }
+        auto result = insert_helper(key);
+        return std::make_pair(iterator(*this, result.first), result.second);
     }
 
     private:
     std::pair<bool, key_type> *table_;
     std::size_t size_;
     std::size_t capacity_;
+    std::size_t min_index;
 };
 
 template<
