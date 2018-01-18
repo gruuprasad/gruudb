@@ -110,7 +110,7 @@ using hash_set = HashTable<Key, Hash, KeyEqual>;
 namespace {
 
 template<typename Key, typename Value, typename Hash>
-struct key_hash
+struct map_hash
 {
     std::size_t operator()(const std::pair<Key, Value> &pair) const {
         return Hash{}(pair.first);
@@ -118,7 +118,7 @@ struct key_hash
 };
 
 template<typename Key, typename Value, typename KeyEqual>
-struct key_equal
+struct map_equal
 {
     bool operator()(const std::pair<Key, Value> &first, const std::pair<Key, Value> &second) const {
         return KeyEqual{}(first.first, second.first);
@@ -138,8 +138,8 @@ struct hash_map
     using key_type = Key;
     using mapped_type = Value;
     using value_type = std::pair<const Key, Value>;
-    using hasher = key_hash<const Key, Value, Hash>;
-    using key_equal = key_equal<const Key, Value, KeyEqual>;
+    using hasher = map_hash<const Key, Value, Hash>;
+    using key_equal = map_equal<const Key, Value, KeyEqual>;
     using size_type = std::size_t;
 
     using reference = Key&;
