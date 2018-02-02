@@ -195,11 +195,17 @@ int main(int argc, char **argv)
 
 #define BENCHMARK(QUERY, ...) { \
     const char *qstr = #QUERY; \
+    head = exhaust_reserved_memory(head); \
+    asm volatile ("" : : : "memory"); \
+    const auto mem_before = get_memory_reserved(); \
     auto start = high_resolution_clock::now(); \
     auto result = query::milestone3:: QUERY(__VA_ARGS__); \
+    asm volatile ("" : : : "memory"); \
+    const auto mem_after = get_memory_reserved(); \
     auto stop = high_resolution_clock::now(); \
     std::cout << "Milestone3, " << qstr << ", compressed_columnstore, " << result << ", " \
-              << duration_cast<nanoseconds>(stop - start).count() / 1e6 << " ms" \
+              << duration_cast<nanoseconds>(stop - start).count() / 1e6 << " ms, " \
+              << (mem_after - mem_before) / 1024.f << " MiB" \
               << std::endl; \
 }
 
