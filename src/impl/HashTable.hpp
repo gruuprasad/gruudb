@@ -36,35 +36,36 @@ struct HashTable
         using reference_type = std::conditional_t<is_const, const_reference, reference>;
         using table_type = std::conditional_t<is_const, const HashTable, HashTable>;
 
-        the_iterator(table_type &table, std::size_t idx) : table_(table), idx_(idx) {  }
+        the_iterator(table_type &container, std::size_t idx) : container_(container), idx_(idx) {  }
 
         /** Compare this iterator with an other iterator for equality. */
-        bool operator==(the_iterator other) const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
-        bool operator!=(the_iterator other) const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
+        bool operator==(the_iterator other) const { return this->idx_ == other.idx_; }
+        bool operator!=(the_iterator other) const { return not operator==(other); }
 
         /** Advance the iterator to the next element. */
         the_iterator & operator++() {
-            /* TODO 3.1 */
-            dbms_unreachable("Not implemented.");
+            while (container_.table_[idx_].first == false && idx_ < container_.capacity_)
+                idx_++;
+            return *this;
         }
 
         /** Return a reference to the designated element */
-        reference_type operator*() const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
+        reference_type operator*() const { return container_.table_[idx_].second; }
         /** Return a pointer to the designated element. */
-        pointer_type operator->() const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
+        pointer_type operator->() const { return & this->operator*(); }
 
         private:
-        table_type &table_;
+        table_type &container_;
         std::size_t idx_;
     };
     public:
     using iterator = the_iterator<false>;
     using const_iterator = the_iterator<true>;
 
-    iterator begin() { iterator(*this, 0); }
-    iterator end()   { iterator(*this, capacity_); }
-    const_iterator begin() const { const_iterrator(*this, 0); }
-    const_iterator end()   const { const_iterator(*this, capacity_); }
+    iterator begin() { return iterator(*this, 0); }
+    iterator end()   { return iterator(*this, capacity_); }
+    const_iterator begin() const { return const_iterrator(*this, 0); }
+    const_iterator end()   const { return const_iterator(*this, capacity_); }
     const_iterator cbegin() const { return begin(); }
     const_iterator cend()   const { return end(); }
 
