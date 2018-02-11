@@ -38,6 +38,26 @@ uint64_t get_memory_reserved()
 #endif
 }
 
+struct chunk
+{
+    union
+    {
+        chunk *next = nullptr;
+        uint8_t __chunk[512];
+    };
+};
+
+chunk * exhaust_reserved_memory(chunk *head = nullptr)
+{
+    const auto mem_current = get_memory_reserved();
+    do {
+        chunk *c = new chunk();
+        c->next = head;
+        head = c;
+    } while (get_memory_reserved() - 10 <= mem_current);
+    return head;
+}
+
 shipdate_index_type build_shipdate_index(const Relation &relation, const ColumnStore &store)
 {
     auto &shipdate_col = store.get_column<uint32_t>(relation["shipdate"].offset());
@@ -159,22 +179,33 @@ int main(int argc, char **argv)
     num_rows = Loader::load_LineItem(f_lineitem, lineitem, *lineitem_store, num_rows);
     Loader::load_Orders(f_orders, orders, *orders_store, num_rows / 3);
 
+    chunk *head = nullptr;
+
     /* Build the B+-Tree. */
+    head = exhaust_reserved_memory(head);
     auto shipdate_index = build_shipdate_index(lineitem, *lineitem_store);
+
     /* Build the hash table. */
+    head = exhaust_reserved_memory(head);
     auto primary_index = build_primary_index(lineitem, *lineitem_store);
 
     /* Compress the column store. */
+    head = exhaust_reserved_memory(head);
     ColumnStore *compressed_columnstore = compress_columnstore_lineitem(lineitem, *lineitem_store);
-
 
 #define BENCHMARK(QUERY, ...) { \
     const char *qstr = #QUERY; \
+    head = exhaust_reserved_memory(head); \
+    asm volatile ("" : : : "memory"); \
+    const auto mem_before = get_memory_reserved(); \
     auto start = high_resolution_clock::now(); \
     auto result = query::milestone3:: QUERY(__VA_ARGS__); \
+    asm volatile ("" : : : "memory"); \
+    const auto mem_after = get_memory_reserved(); \
     auto stop = high_resolution_clock::now(); \
     std::cout << "Milestone3, " << qstr << ", compressed_columnstore, " << result << ", " \
-              << duration_cast<nanoseconds>(stop - start).count() / 1e6 << " ms" \
+              << duration_cast<nanoseconds>(stop - start).count() / 1e6 << " ms, " \
+              << (mem_after - mem_before) / 1024.f << " MiB" \
               << std::endl; \
 }
 
@@ -186,4 +217,10 @@ int main(int argc, char **argv)
     delete lineitem_store;
     delete orders_store;
     delete compressed_columnstore;
+
+    while (head) {
+        chunk *c = head;
+        head = c->next;
+        delete c;
+    }
 }
