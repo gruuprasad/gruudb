@@ -34,8 +34,9 @@ struct HashTable
         static constexpr bool is_const = C;
         using pointer_type = std::conditional_t<is_const, const_pointer, pointer>;
         using reference_type = std::conditional_t<is_const, const_reference, reference>;
+        using table_type = std::conditional_t<is_const, const HashTable, HashTable>;
 
-        the_iterator(/* TODO 3.1 */) { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
+        the_iterator(table_type &table, std::size_t idx) : table_(table), idx_(idx) {  }
 
         /** Compare this iterator with an other iterator for equality. */
         bool operator==(the_iterator other) const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
@@ -53,52 +54,79 @@ struct HashTable
         pointer_type operator->() const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
 
         private:
-        /* TODO 3.1 - declare fields */
+        table_type &table_;
+        std::size_t idx_;
     };
     public:
     using iterator = the_iterator<false>;
     using const_iterator = the_iterator<true>;
 
-    iterator begin() { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
-    iterator end()   { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
-    const_iterator begin() const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
-    const_iterator end()   const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
+    iterator begin() { iterator(*this, 0); }
+    iterator end()   { iterator(*this, capacity_); }
+    const_iterator begin() const { const_iterrator(*this, 0); }
+    const_iterator end()   const { const_iterator(*this, capacity_); }
     const_iterator cbegin() const { return begin(); }
     const_iterator cend()   const { return end(); }
 
-    HashTable(/* TODO 3.1 */)
+    HashTable(std::size_t capacity = 1024): table_(nullptr), size_(0), capacity_(capacity) 
     {
-        /* TODO 3.1 */
-        dbms_unreachable("Not implemented.");
+        table_ = new std::pair<bool, key_type>[capacity];
     }
 
     ~HashTable() {
-        /* TODO 3.1 */
-        dbms_unreachable("Not implemented.");
+        delete[] table_;
     }
 
-    size_type size() const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
-    size_type capacity() const { /* TODO 3.1 */ dbms_unreachable("Not implemented."); }
+    size_type size() const { return size_; }
+    size_type capacity() const { return capacity_; }
+
+    std::size_t find_helper(const key_type &key) {
+        std::size_t index = hasher{}(key) % capacity_;
+        while (table_[index].second != key && table_[index].first == true)
+            index = (index + 1) % capacity_;
+        if (table_[index].second == key) 
+            return index;
+        else
+            return capacity_;
+    }
 
     /** If an element with key exists, returns an iterator to that element.  Otherwise, returns end(). */
     iterator find(const key_type &key) {
-        /* TODO 3.1 */
-        dbms_unreachable("Not implemented.");
+        auto index = find_helper(key);
+        if (index == capacity_)
+            return iterator(*this, capacity_);
+        else
+            return iterator(*this, index); 
+
     }
+
     const_iterator find(const key_type &key) const {
-        /* TODO 3.1 */
-        dbms_unreachable("Not implemented.");
+        auto index = find_helper(key);
+        if (index == capacity_)
+            return const_iterator(*this, capacity_);
+        else
+            return const_iterator(*this, index); 
     }
 
     /** Returns an iterator to the element in the table and a flag whether insertion succeeded.  The flag is true, if
      * the element was newly inserted into the table, and false otherwise.  The iterator designates the newly inserted
      * element respectively the element already present in the table. */
     std::pair<iterator, bool> insert(const key_type &key) {
-        /* TODO 3.1 */
-        dbms_unreachable("Not implemented.");
+        std::size_t index = hasher{}(key) % capacity_;
+        while (table_[index].first == true) {
+            if (table_[index].second == key)
+                return std::make_pair(iterator(*this, index), false);
+            ++index;
+        }
+        table_[index] = std::make_pair(true, key);
+        size_++;
+        return std::make_pair(iterator(*this, index), true);
     }
 
-    /* TODO 3.1 - declare fields */
+    private:
+    std::pair<bool, key_type> *table_;
+    std::size_t size_;
+    std::size_t capacity_;
 };
 
 template<
