@@ -4,6 +4,7 @@
 #include "impl/ColumnStore.hpp"
 #include "impl/Compression.hpp"
 #include "impl/RowStore.hpp"
+#include "impl/BPlusTree.hpp"
 #include <unordered_map>
 #include <chrono>
 
@@ -238,8 +239,18 @@ namespace milestone3 {
 
 unsigned Q3(const ColumnStore &store, shipdate_index_type &index)
 {
-    /* TODO 3.3.1 */
-    dbms_unreachable("Not implemented.");
+    
+    const uint32_t start_date = date_to_int(1993, 1, 1);
+    const uint32_t end_date = date_to_int(1993, 31, 12);
+
+    unsigned result = 0;
+    
+    auto range = index.in_range(start_date,end_date);
+    for(auto it= range.begin(); it!=range.end(); ++it)
+    {
+        result += (*it).second;
+    }
+    return result;
 }
 
 unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L, primary_index_type &index)
