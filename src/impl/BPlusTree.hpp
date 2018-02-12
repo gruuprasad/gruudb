@@ -38,24 +38,34 @@ struct BPlusTree
         using pointer_type = std::conditional_t<is_const, const_pointer, pointer>;
         using reference_type = std::conditional_t<is_const, const_reference, reference>;
 
-        the_iterator() { /* TODO 3.2.3 */ }
+        the_iterator(BPlusTree &btree, std::size_t idx ) : btree_(btree), idx_(idx) { }
 
         /** Compare this iterator with an other iterator for equality. */
-        bool operator==(the_iterator other) const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
-        bool operator!=(the_iterator other) const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
+        bool operator==(the_iterator other) const { return this->idx_ == other.idx_;}
+        bool operator!=(the_iterator other) const { return not operator==(other); }
 
         /** Advance the iterator to the next element. */
         the_iterator & operator++() {
-            /* TODO 3.2.3 */
-            dbms_unreachable("Not implemented.");
+            idx_++; return *this;
         }
 
         /** Return a pointer to the designated element. */
-        pointer_type operator->() const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
+        pointer_type operator->() const { return & this->operator*(); }
         /** Return a reference to the designated element */
-        reference_type operator*() const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
+        reference_type operator*() const { 
+            std::size_t leaf_index = idx_ / 10;
+            std::size_t offset = idx_ % 10;
+            leaf_node* leaf_of_interest = btree_.first_leaf;
+            for (auto i = 0; i < leaf_index; ++i) {
+                leaf_of_interest = btree_.first_leaf->next_leaf_node;
+            }
+            return leaf_of_interest->map[offset];
+        }
 
-        /* TODO 3.2.3 - declare fields */
+        private:
+            BPlusTree &btree_;
+            std::size_t idx_;
+            
     };
     public:
     using iterator = the_iterator<false>;
@@ -93,63 +103,260 @@ struct BPlusTree
     using const_range = the_range<true>;
 
     /*--- Tree Node Data Types ---------------------------------------------------------------------------------------*/
-    struct inner_node
+    struct node
     {
-        /* TODO 3.2.1 */
+        node(bool leaf) : m_leaf(leaf) {}
+        virtual key_type first_key() = 0;
+        bool is_leaf()
+        {
+            return m_leaf;
+        }
+        
+        bool m_leaf;
     };
-
-    struct leaf_node
+    
+    struct inner_node : node
     {
-        /* TODO 3.2.1 */
+    public:
+        
+        inner_node() : node(false), first_child_node(nullptr)  {}
+        
+        ~inner_node()
+        { 
+            for( auto element : map)
+                delete element.second;
+            delete first_child_node;
+        }
+        
+        void insert(node *lower_node)
+        {
+            if(first_child_node != nullptr)
+            {
+                map.push_back(std::make_pair(lower_node->first_key(), lower_node));
+            }
+            else
+            {
+                first_child_node = lower_node;
+            }
+        }
+        
+        
+        // check if it contains k elements 
+        
+        bool contains(int k)
+        {
+            return (k == map.size());
+        }
+        
+        bool is_child_leaf()
+        {
+            return first_child_node->is_leaf();
+        }
+        
+        key_type first_key()
+        {
+            return ((map.at(0)).first);
+        }
+        
+        std::vector<std::pair<key_type, node*>> map;
+        node *first_child_node;
+    };
+    
+    
+
+    struct leaf_node : node
+    {
+        
+    public:
+        leaf_node(std::size_t index = 0) : node(true), next_leaf_node(nullptr), index(index) {}
+
+        ~leaf_node() { delete next_leaf_node; }
+        
+        void insert(value_type element)
+        {
+            map.push_back(element);
+        }
+        
+        void insert_next_leaf(leaf_node *next_leaf)
+        {
+            next_leaf_node = next_leaf;
+        }
+        
+        key_type first_key()
+        {
+            return ((map.at(0)).first);
+        }
+        
+        bool contains(int k)
+        {
+            return (k == map.size());
+        }
+        
+        std::vector<value_type> map;
+        leaf_node *next_leaf_node;
+        std::size_t index;
     };
 
 
     /*--- Factory methods --------------------------------------------------------------------------------------------*/
     template<typename It>
     static BPlusTree Bulkload(It begin, It end) {
-        /* TODO 3.2.2 */
-        dbms_unreachable("Not implemented.");
+
+        std::size_t size = 0;
+        std::size_t index = 0;
+       int size_inode = 5;
+       int size_leaf = 10;
+       leaf_node *current_leaf;
+       // list of last node of each row of the B+ tree
+       std::vector<inner_node*> map_last_node;
+       current_leaf = new leaf_node(index);
+       leaf_node* first_leaf = current_leaf;
+       
+       // we can check if our B+ tree is ok if the size of this map is equal to the theoric height if the B+ tree 
+
+       inner_node* inode = new inner_node;
+       inode->insert(current_leaf);
+       map_last_node.push_back(inode);
+       
+       for(It it = begin; it!=end; ++it)
+       {
+           /* check if the current leaf_node is full */
+            if(current_leaf->contains(size_leaf))
+            {
+                /* reset the current_leaf node to an empty one */
+                leaf_node *new_leaf = new leaf_node(++index);
+                current_leaf->insert_next_leaf(new_leaf);
+                current_leaf = new_leaf;
+                current_leaf->insert(*it);
+                
+                // node who is going to be inserted in the upper node
+                node * current_new_node = current_leaf;
+                
+                /* update all upper node */
+                for(auto node_iterator= map_last_node.begin(); node_iterator!=map_last_node.end(); node_iterator++)
+                {
+                    // if current parent full
+                    if((*node_iterator)->contains(size_inode))
+                    {
+                        if(*node_iterator == map_last_node.back())
+                        {
+                            inode = new inner_node;
+                            inode->insert(*node_iterator);
+                            map_last_node.push_back(inode);
+                        }
+                        inner_node *new_node = new inner_node();
+                        new_node->insert(current_new_node);
+                        current_new_node = new_node;
+                        *node_iterator = new_node;
+                    }
+                    else
+                    {
+                        (*node_iterator)->insert(current_new_node);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                current_leaf->insert(*it);
+            }
+       size++;
+       }
+
+       
+       // root node is the last element of map_last_node
+        BPlusTree bptree(map_last_node.back(), first_leaf, size);
+        return bptree;
     }
 
 
     /*--- Start of B+-Tree code --------------------------------------------------------------------------------------*/
     private:
-    BPlusTree(/* TODO 3.2.2 */) { /* TODO 3.2.2 */ dbms_unreachable("Not implemented."); }
+    BPlusTree(inner_node * the_root_node, leaf_node* first_leaf, std::size_t size):root_node(the_root_node), first_leaf(first_leaf), size_(size) {}
 
     public:
     BPlusTree(const BPlusTree&) = delete;
     BPlusTree(BPlusTree&&) = default;
 
-    ~BPlusTree() { /* TODO 3.2.1 */ dbms_unreachable("Not implemented."); }
+    ~BPlusTree() { delete root_node; }
 
 
-    iterator begin() { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
-    iterator end()   { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
-    const_iterator begin() const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
-    const_iterator end()   const { /* TODO 3.2.3 */ dbms_unreachable("Not implemented."); }
+    iterator begin() { return iterator(*this, 0); }
+    iterator end()   { return iterator(*this, size_); }
+    const_iterator begin() const { return const_iterator(*this, 0); }
+    const_iterator end()   const { return const_iterator(*this, size_); }
     const_iterator cbegin() const { return begin(); }
     const_iterator cend()   const { return end(); }
 
-    const_iterator find(const key_type key) const {
-        /* TODO 3.2.3 */
-        dbms_unreachable("Not implemented.");
+    std::pair<bool, std::size_t> find_helper(const key_type &key) {
+        inner_node * node_t = root_node;
+        int i = 0;
+        while (!node_t->is_child_leaf()) {
+            i = 0;
+            if (i < node_t->map.size() && node_t->map[i].first > key) 
+                node_t = static_cast<inner_node *>(node_t->first_child_node);
+            else {
+                while (i < node_t->map.size() && node_t->map[i].first <= key)
+                    ++i;
+                node_t = static_cast<inner_node *>(node_t->map[i-1].second);
+                }
+        }
+        leaf_node* node_c;
+        i = 0;
+        if (key < node_t->map[i].first) 
+            node_c = static_cast<leaf_node *>(node_t->first_child_node);
+        else {
+            while (i < node_t->map.size() && key >= node_t->map[i].first)
+                ++i;
+            node_c = static_cast<leaf_node *>(node_t->map[i-1].second);
+        }
+        int j = 0;
+        while (j < node_c->map.size() && node_c->map[j].first <= key) {
+            if (node_c->map[j].first == key)
+                return std::make_pair(true, (node_c->index * 10) + j);
+            ++j;
+        }
+        return std::make_pair(false, (node_c->index * 10) + j);
     }
+
+    const_iterator find(const key_type key) const {
+        auto result = find_helper(key);
+        if (result.first == true)
+            return const_iterator(*this, result.second);
+        else 
+            return const_iterator(*this, size_);
+    }
+    
     iterator find(const key_type &key) {
-        /* TODO 3.2.3 */
-        dbms_unreachable("Not implemented.");
+        auto result = find_helper(key);
+        if (result.first == true)
+            return iterator(*this, result.second);
+        else
+            return iterator(*this, size_);
     }
 
     const_range in_range(const key_type &lower, const key_type &upper) const {
-        /* TODO 3.2.3 */
-        dbms_unreachable("Not implemented.");
+        auto lower_result = find_helper(lower);
+        auto upper_result = find_helper(upper);
+        if (upper_result.first == true)
+            return const_range(const_iterator(*this, lower_result.second), const_iterator(*this, upper_result.second));
+        else
+            return const_range(const_iterator(*this, lower_result.second), const_iterator(*this, upper_result.second));
     }
+
     range in_range(const key_type &lower, const key_type &upper) {
-        /* TODO 3.2.3 */
-        dbms_unreachable("Not implemented.");
+        auto lower_result = find_helper(lower);
+        auto upper_result = find_helper(upper);
+        if (upper_result.first == true)
+            return range(iterator(*this, lower_result.second), iterator(*this, upper_result.second));
+        else
+            return range(iterator(*this, lower_result.second), iterator(*this, upper_result.second));
     }
 
     private:
-    /* TODO 3.2.1 - declare fields */
+    inner_node *root_node;
+    leaf_node *first_leaf;
+    std::size_t size_;
 };
 
 }
