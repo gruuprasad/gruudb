@@ -5,6 +5,7 @@
 #include "impl/Compression.hpp"
 #include "impl/RowStore.hpp"
 #include "impl/BPlusTree.hpp"
+#include "impl/HashTable.hpp"
 #include <unordered_map>
 #include <chrono>
 
@@ -255,8 +256,8 @@ unsigned Q3(const ColumnStore &store, shipdate_index_type &index)
 
 unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L, primary_index_type &index)
 {
-    /* TODO 3.3.2 */
-    dbms_unreachable("Not implemented.");
+    auto it = index.find(std::make_pair(O, L));
+    return (unsigned)strlen(*((*it).second));
 }
 
 unsigned Q5(const ColumnStore &lineitem, const ColumnStore &orders)
