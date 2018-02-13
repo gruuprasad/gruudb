@@ -50,11 +50,11 @@ struct BPlusTree
         }
 
         /** Return a pointer to the designated element. */
-        pointer_type operator->() const { return & this->operator*(); }
+        pointer_type operator->() const { return &(this->operator*()); }
         /** Return a reference to the designated element */
         reference_type operator*() const { 
-            std::size_t leaf_index = idx_ / 10;
-            std::size_t offset = idx_ % 10;
+            std::size_t leaf_index = idx_ / 400;
+            std::size_t offset = idx_ % 400;
             leaf_node* leaf_of_interest = btree_.first_leaf;
             for (auto i = 0; i < leaf_index; ++i) {
                 leaf_of_interest = btree_.first_leaf->next_leaf_node;
@@ -158,8 +158,8 @@ struct BPlusTree
         {
             if (0 < static_cast<int>(map.size()))
             return ((map.at(0)).first);
-            else
-            return 0;
+            else 
+            return first_child_node->last_key()+1;
         }
         
         key_type last_key()
@@ -221,8 +221,8 @@ struct BPlusTree
 
         std::size_t size = 0;
         std::size_t index = 0;
-       int size_inode = 5;
-       int size_leaf = 10;
+       int size_inode = 200;
+       int size_leaf = 400;
        leaf_node *current_leaf;
        inner_node* n_inode;
        inner_node* new_root = nullptr;
@@ -368,11 +368,11 @@ struct BPlusTree
         {
             while (j < node_c->map.size() && node_c->map[j].first <= key) {
                 if (node_c->map[j].first == key)
-                    return std::make_pair(true, (node_c->index * 10) + j);
+                    return std::make_pair(true, (node_c->index * 400) + j);
                 ++j;
             }
         }
-        return std::make_pair(false, (node_c->index * 10) + j);
+        return std::make_pair(false, (node_c->index * 400) + j);
     }
 
     const_iterator find(const key_type key) const {
