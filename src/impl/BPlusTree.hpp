@@ -145,7 +145,7 @@ struct BPlusTree
         
         bool contains(int k)
         {
-            return (k == map.size());
+            return (k == static_cast<int>(map.size()));
         }
         
         bool is_child_leaf()
@@ -155,7 +155,10 @@ struct BPlusTree
         
         key_type first_key()
         {
+            if (0 < static_cast<int>(map.size()))
             return ((map.at(0)).first);
+            else
+            return 0;
         }
         
         std::vector<std::pair<key_type, node*>> map;
@@ -184,12 +187,15 @@ struct BPlusTree
         
         key_type first_key()
         {
+            if (0 < static_cast<int>(map.size()))
             return ((map.at(0)).first);
+            else
+            return 0;
         }
         
         bool contains(int k)
         {
-            return (k == map.size());
+            return (k == static_cast<int>(map.size()));
         }
         
         std::vector<value_type> map;
@@ -207,6 +213,8 @@ struct BPlusTree
        int size_inode = 5;
        int size_leaf = 10;
        leaf_node *current_leaf;
+       inner_node* n_inode;
+       
        // list of last node of each row of the B+ tree
        std::vector<inner_node*> map_last_node;
        current_leaf = new leaf_node(index);
@@ -232,18 +240,26 @@ struct BPlusTree
                 // node who is going to be inserted in the upper node
                 node * current_new_node = current_leaf;
                 
+                if((map_last_node.back())->contains(size_inode))
+                {
+                    n_inode = new inner_node();
+                    n_inode->insert(map_last_node.back());
+                    map_last_node.push_back(n_inode);
+                }
+                
                 /* update all upper node */
                 for(auto node_iterator= map_last_node.begin(); node_iterator!=map_last_node.end(); node_iterator++)
                 {
                     // if current parent full
                     if((*node_iterator)->contains(size_inode))
                     {
-                        if(*node_iterator == map_last_node.back())
+                     /*   if(*node_iterator == map_last_node.back())
                         {
-                            inode = new inner_node;
-                            inode->insert(*node_iterator);
-                            map_last_node.push_back(inode);
+                            n_inode = new inner_node();
+                            n_inode->insert(*node_iterator);
+                            map_last_node.push_back(n_inode);
                         }
+                    */
                         inner_node *new_node = new inner_node();
                         new_node->insert(current_new_node);
                         current_new_node = new_node;
