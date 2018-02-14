@@ -57,7 +57,7 @@ struct BPlusTree
             std::size_t offset = idx_ % 400;
             leaf_node* leaf_of_interest = btree_.first_leaf;
             for (auto i = 0; i < leaf_index; ++i) {
-                leaf_of_interest = btree_.first_leaf->next_leaf_node;
+                leaf_of_interest = leaf_of_interest->next_leaf_node;
             }
             return leaf_of_interest->map[offset];
         }
