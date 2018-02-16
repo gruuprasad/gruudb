@@ -344,15 +344,18 @@ struct BPlusTree
     std::pair<bool, std::size_t> find_helper(const key_type &key) {
         inner_node * node_t = root_node;
         int i = 0;
-        while (!node_t->is_child_leaf()) {
-            i = 0;
-            if (i < node_t->map.size() && node_t->map[i].first > key) 
-                node_t = static_cast<inner_node *>(node_t->first_child_node);
-            else {
-                while (i < node_t->map.size() && node_t->map[i].first <= key)
-                    ++i;
-                node_t = static_cast<inner_node *>(node_t->map[i-1].second);
-                }
+        if(!node_t->is_child_leaf())
+        {
+            while (!node_t->is_child_leaf()) {
+                i = 0;
+                if (i < node_t->map.size() && node_t->map[i].first > key) 
+                    node_t = static_cast<inner_node *>(node_t->first_child_node);
+                else {
+                    while (i < node_t->map.size() && node_t->map[i].first <= key)
+                        ++i;
+                    node_t = static_cast<inner_node *>(node_t->map[i-1].second);
+                    }
+            }
         }
         leaf_node* node_c;
         i = 0;
@@ -364,14 +367,16 @@ struct BPlusTree
             node_c = static_cast<leaf_node *>(node_t->map[i-1].second);
         }
         int j = 0;
-        if(node_c !=nullptr)
+        
+        if(node_c == nullptr)
         {
-            while (j < node_c->map.size() && node_c->map[j].first <= key) {
+             node_c = static_cast<leaf_node *>(node_t->first_child_node);
+        }
+        while (j < node_c->map.size() && node_c->map[j].first <= key) {
                 if (node_c->map[j].first == key)
                     return std::make_pair(true, (node_c->index * 400) + j);
                 ++j;
             }
-        }
         return std::make_pair(false, (node_c->index * 400) + j);
     }
 
@@ -397,7 +402,7 @@ struct BPlusTree
         if (upper_result.first == true)
             return const_range(const_iterator(*this, lower_result.second), const_iterator(*this, upper_result.second));
         else
-            return const_range(const_iterator(*this, lower_result.second), const_iterator(*this, upper_result.second -1));
+            return const_range(const_iterator(*this, lower_result.second), const_iterator(*this, upper_result.second));
     }
 
     range in_range(const key_type &lower, const key_type &upper) {
@@ -406,7 +411,7 @@ struct BPlusTree
         if (upper_result.first == true)
             return range(iterator(*this, lower_result.second), iterator(*this, upper_result.second));
         else
-            return range(iterator(*this, lower_result.second), iterator(*this, upper_result.second -1));
+            return range(iterator(*this, lower_result.second), iterator(*this, upper_result.second));
     }
 
     private:
