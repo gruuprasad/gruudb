@@ -257,7 +257,10 @@ unsigned Q3(const ColumnStore &store, shipdate_index_type &index)
 unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L, primary_index_type &index)
 {
     auto it = index.find(std::make_pair(O, L));
-    return (unsigned)strlen(*((*it).second));
+    if (it != index.end())
+        return (unsigned)strlen(*((*it).second));
+    else
+        return 0;
 }
 
 unsigned Q5(const ColumnStore &lineitem, const ColumnStore &orders)

@@ -50,11 +50,11 @@ struct BPlusTree
         }
 
         /** Return a pointer to the designated element. */
-        pointer_type operator->() const { return & this->operator*(); }
+        pointer_type operator->() const { return &(this->operator*()); }
         /** Return a reference to the designated element */
         reference_type operator*() const { 
-            std::size_t leaf_index = idx_ / 10;
-            std::size_t offset = idx_ % 10;
+            std::size_t leaf_index = idx_ / 400;
+            std::size_t offset = idx_ % 400;
             leaf_node* leaf_of_interest = btree_.first_leaf;
             for (auto i = 0; i < leaf_index; ++i) {
                 leaf_of_interest = btree_.first_leaf->next_leaf_node;
@@ -107,6 +107,7 @@ struct BPlusTree
     {
         node(bool leaf) : m_leaf(leaf) {}
         virtual key_type first_key() = 0;
+        virtual key_type last_key() = 0;
         bool is_leaf()
         {
             return m_leaf;
@@ -157,8 +158,13 @@ struct BPlusTree
         {
             if (0 < static_cast<int>(map.size()))
             return ((map.at(0)).first);
-            else
-            return 0;
+            else 
+            return first_child_node->last_key()+1;
+        }
+        
+        key_type last_key()
+        {
+            return (map.back().first);
         }
         
         std::vector<std::pair<key_type, node*>> map;
@@ -193,6 +199,11 @@ struct BPlusTree
             return 0;
         }
         
+        key_type last_key()
+        {
+            return (map.back().first);
+        }
+        
         bool contains(int k)
         {
             return (k == static_cast<int>(map.size()));
@@ -210,10 +221,11 @@ struct BPlusTree
 
         std::size_t size = 0;
         std::size_t index = 0;
-       int size_inode = 5;
-       int size_leaf = 10;
+       int size_inode = 200;
+       int size_leaf = 400;
        leaf_node *current_leaf;
        inner_node* n_inode;
+       inner_node* new_root = nullptr;
        
        // list of last node of each row of the B+ tree
        std::vector<inner_node*> map_last_node;
@@ -242,9 +254,21 @@ struct BPlusTree
                 
                 if((map_last_node.back())->contains(size_inode))
                 {
+                    
                     n_inode = new inner_node();
                     n_inode->insert(map_last_node.back());
-                    map_last_node.push_back(n_inode);
+                    new_root = n_inode;
+                   // map_last_node.push_back(n_inode);
+                }
+                
+                if(new_root != nullptr)
+                {
+                    if((map_last_node.back())->map.size()>=1)
+                    {
+                        new_root->insert(map_last_node.back());
+                        map_last_node.push_back(new_root);
+                        new_root = nullptr;
+                    }
                 }
                 
                 /* update all upper node */
@@ -279,10 +303,23 @@ struct BPlusTree
        size++;
        }
 
-       
-       // root node is the last element of map_last_node
-        BPlusTree bptree(map_last_node.back(), first_leaf, size);
-        return bptree;
+       if(new_root == nullptr)
+       {
+        // root node is the last element of map_last_node
+           if((map_last_node.back())->map.size() ==0)
+           {
+                (map_last_node.back())->map.push_back(std::make_pair(((map_last_node.back())->first_child_node)->last_key()+1, nullptr));
+           }
+            BPlusTree bptree(map_last_node.back(), first_leaf, size);
+            return bptree;
+        }
+        else
+        {
+            (map_last_node.back())->map.push_back(std::make_pair(((map_last_node.back())->first_child_node)->last_key()+1, nullptr));
+            new_root->insert(map_last_node.back());
+            BPlusTree bptree(new_root, first_leaf, size);
+            return bptree;
+        }
     }
 
 
@@ -307,19 +344,22 @@ struct BPlusTree
     std::pair<bool, std::size_t> find_helper(const key_type &key) {
         inner_node * node_t = root_node;
         int i = 0;
-        while (!node_t->is_child_leaf()) {
-            i = 0;
-            if (i < node_t->map.size() && node_t->map[i].first > key) 
-                node_t = static_cast<inner_node *>(node_t->first_child_node);
-            else {
-                while (i < node_t->map.size() && node_t->map[i].first <= key)
-                    ++i;
-                node_t = static_cast<inner_node *>(node_t->map[i-1].second);
-                }
+        if(!node_t->is_child_leaf())
+        {
+            while (!node_t->is_child_leaf()) {
+                i = 0;
+                if (i < node_t->map.size() && node_t->map[i].first > key) 
+                    node_t = static_cast<inner_node *>(node_t->first_child_node);
+                else {
+                    while (i < node_t->map.size() && node_t->map[i].first <= key)
+                        ++i;
+                    node_t = static_cast<inner_node *>(node_t->map[i-1].second);
+                    }
+            }
         }
         leaf_node* node_c;
         i = 0;
-        if (key < node_t->map[i].first) 
+        if (i < node_t->map.size() && key < node_t->map[i].first) 
             node_c = static_cast<leaf_node *>(node_t->first_child_node);
         else {
             while (i < node_t->map.size() && key >= node_t->map[i].first)
@@ -327,12 +367,17 @@ struct BPlusTree
             node_c = static_cast<leaf_node *>(node_t->map[i-1].second);
         }
         int j = 0;
-        while (j < node_c->map.size() && node_c->map[j].first <= key) {
-            if (node_c->map[j].first == key)
-                return std::make_pair(true, (node_c->index * 10) + j);
-            ++j;
+        
+        if(node_c == nullptr)
+        {
+             node_c = static_cast<leaf_node *>(node_t->first_child_node);
         }
-        return std::make_pair(false, (node_c->index * 10) + j);
+        while (j < node_c->map.size() && node_c->map[j].first <= key) {
+                if (node_c->map[j].first == key)
+                    return std::make_pair(true, (node_c->index * 400) + j);
+                ++j;
+            }
+        return std::make_pair(false, (node_c->index * 400) + j);
     }
 
     const_iterator find(const key_type key) const {
