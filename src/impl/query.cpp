@@ -226,7 +226,9 @@ unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L)
     auto it_12 = store.get_column<RLE<uint32_t>>(12).cbegin();
     auto it_14 = store.get_column<Char<45>>(14).cbegin();
 
-    while (it_4 != end_4) {
+    std::size_t store_size = store.size();
+
+    for (std::size_t i = 0; i < store_size; ++i) {
         if (*it_4 == O && *it_12 == L)
             return (unsigned)strlen(*it_14);
         ++it_4; ++it_12; ++it_14;
@@ -265,8 +267,34 @@ unsigned Q4(const ColumnStore &store, uint32_t O, uint32_t L, primary_index_type
 
 unsigned Q5(const ColumnStore &lineitem, const ColumnStore &orders)
 {
-    /* TODO 3.3.3 */
-    dbms_unreachable("Not implemented.");
+    auto tax_it = lineitem.get_column<RLE<int64_t>>(3).cbegin();
+    auto extendPrice_it = lineitem.get_column<RLE<int64_t>>(1).cbegin();
+    auto order_key_it = lineitem.get_column<RLE<uint32_t>>(4).cbegin();
+    auto shipmode_it = lineitem.get_column<RLE<Char<11>>>(13).cbegin();
+    auto order_key_end = lineitem.get_column<RLE<uint32_t>>(4).cend();
+    auto ordersStore_O_it = orders.get_column<uint32_t>(1).cbegin();
+    auto ordersStore_O_end = orders.get_column<uint32_t>(1).cend();
+    auto ordersStore_status = orders.get_column<uint8_t>(8).cbegin();
+
+    std::unordered_map<uint32_t, double> key_index;
+    for (std::size_t i = 0; i < lineitem.size(); ++i) {
+        if (strcmp((const char*) *shipmode_it, "AIR"))
+            key_index[*order_key_it] += ((*extendPrice_it) * (*tax_it))/100;
+        ++order_key_it; ++shipmode_it; ++extendPrice_it; ++tax_it;
+    }
+    
+    std::pair<uint32_t, double> max{0, 0};
+    std::size_t orders_size = orders.size();
+    for (std::size_t i = 0; i < orders_size; ++i) {
+        if (*ordersStore_status == 'F') {
+            auto lookup = key_index.find(*ordersStore_O_it);
+            if (lookup != key_index.end() && lookup->second > max.second)
+                max = *lookup;
+        }
+        ++ordersStore_O_it; ++ordersStore_status;
+    }
+
+    return max.first;
 }
 
 }
