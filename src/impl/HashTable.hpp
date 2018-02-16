@@ -74,7 +74,7 @@ struct HashTable
     const_iterator cbegin() const { return begin(); }
     const_iterator cend()   const { return end(); }
 
-    HashTable(std::size_t capacity = 1024): table_(nullptr), size_(0), capacity_(capacity), min_index(capacity)
+    HashTable(std::size_t capacity = 131072): table_(nullptr), size_(0), capacity_(capacity), min_index(capacity)
     {
         table_ = new std::pair<bool, key_type>[capacity];
     }
@@ -136,7 +136,7 @@ struct HashTable
     void resize() {
         std::size_t old_capacity = capacity_;
         std::pair<bool, key_type> * old_table = table_;
-        capacity_ += capacity_ / 2;
+        capacity_ += 2 * capacity_;
         size_ = 0;
         table_ = new std::pair<bool, key_type>[capacity_];
 
@@ -154,7 +154,7 @@ struct HashTable
      * the element was newly inserted into the table, and false otherwise.  The iterator designates the newly inserted
      * element respectively the element already present in the table. */
     std::pair<iterator, bool> insert(const key_type &key) {
-        if (load_factor() > .75) {
+        if (load_factor() > .85) {
             resize();
         }
         auto result = insert_helper(key);
