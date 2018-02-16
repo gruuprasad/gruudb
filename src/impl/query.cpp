@@ -276,10 +276,10 @@ unsigned Q5(const ColumnStore &lineitem, const ColumnStore &orders)
     auto ordersStore_O_end = orders.get_column<uint32_t>(1).cend();
     auto ordersStore_status = orders.get_column<uint8_t>(8).cbegin();
 
-    std::unordered_map<uint32_t, double> key_index;
+    std::unordered_map<uint32_t, double> key_index{};
     for (std::size_t i = 0; i < lineitem.size(); ++i) {
-        if (strcmp((const char*) *shipmode_it, "AIR"))
-            key_index[*order_key_it] += ((*extendPrice_it) * (*tax_it))/100;
+        if (strcmp((const char*) *shipmode_it, "AIR") == 0)
+            key_index[*order_key_it] += (*extendPrice_it) * (*tax_it);
         ++order_key_it; ++shipmode_it; ++extendPrice_it; ++tax_it;
     }
     
