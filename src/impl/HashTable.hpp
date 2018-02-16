@@ -126,7 +126,7 @@ struct HashTable
         while (table_[index].first == true) {
             if (key_equal{}(table_[index].second, key))
                 return std::make_pair(index, false);
-            ++index;
+            index = (index + 1) % capacity_;
         }
         table_[index] = std::make_pair(true, key);
         size_++;
