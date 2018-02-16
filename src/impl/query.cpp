@@ -242,7 +242,7 @@ unsigned Q3(const ColumnStore &store, shipdate_index_type &index)
 {
     
     const uint32_t start_date = date_to_int(1993, 1, 1);
-    const uint32_t end_date = date_to_int(1993, 31, 12);
+    const uint32_t end_date = date_to_int(1994, 1, 1);
 
     unsigned result = 0;
     
